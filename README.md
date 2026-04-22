@@ -1,10 +1,11 @@
-🍽️ Food Calorie Recognition App (Flutter Frontend)
+# 🍽️ Food Calorie Recognition App (Flutter Frontend)
 
 A modern **Flutter-based frontend** for an AI-powered food calorie recognition system.
 This app allows users to capture or upload food images, send them to a backend API, and receive intelligent predictions including **food name, calories, confidence score, ingredients**, and **scan history**.
 
+---
 
-🚀 Key Features
+## 🚀 Key Features
 
 ✨ **Image Input**
 
@@ -43,8 +44,9 @@ This app allows users to capture or upload food images, send them to a backend A
 * **State Management:** Riverpod
 * **UI Design:** Material 3
 
+---
 
- 📋 Requirements
+## 📋 Requirements
 
 Ensure your development environment includes:
 
@@ -60,22 +62,22 @@ flutter doctor
 
 ---
 
-⚙️ Setup & Installation
+## ⚙️ Setup & Installation
 
- 1️⃣ Clone the Repository
+### 1️⃣ Clone the Repository
 
 ```bash
 git clone https://github.com/your-username/your-repo-name.git
 cd your-repo-name
 ```
 
- 2️⃣ Install Dependencies
+### 2️⃣ Install Dependencies
 
 ```bash
 flutter pub get
 ```
 
- 3️⃣ Configure Backend API
+### 3️⃣ Configure Backend API
 
 Default API configuration is located at:
 
@@ -91,7 +93,7 @@ flutter run --dart-define=API_BASE_URL=http://your-backend-host:8000
 
 ---
 
-▶️ Running the App
+## ▶️ Running the App
 
 ```bash
 flutter run
@@ -99,17 +101,17 @@ flutter run
 
 ---
 
-#🔌 Backend API Contract
+## 🔌 Backend API Contract
 
 Your backend must support:
 
- ✅ Health Check
+### ✅ Health Check
 
 ```
 GET /
 ```
 
- ✅ Prediction Endpoint
+### ✅ Prediction Endpoint
 
 ```
 POST /predict
@@ -150,7 +152,7 @@ lib/
 
 ---
 
- 🧪 Useful Commands
+## 🧪 Useful Commands
 
 ```bash
 flutter analyze      # Code quality check
@@ -161,7 +163,7 @@ flutter clean        # Clean build files
 
 ---
 
- 📌 Notes
+## 📌 Notes
 
 * This project is marked as private:
 
@@ -175,7 +177,7 @@ flutter clean        # Clean build files
 
 ---
 
- 🌟 Future Improvements
+## 🌟 Future Improvements
 
 * 📈 Nutritional breakdown (protein, carbs, fat)
 * 🔐 User authentication
@@ -185,13 +187,19 @@ flutter clean        # Clean build files
 
 ---
 
- 🤝 Contribution
+## 🤝 Contribution
 
 Contributions are welcome!
 Feel free to fork the repo and submit a pull request.
 
 ---
 
+## 📧 Contact
+
+For queries or collaboration:
+
+* GitHub Issues
+* Developer: *Your Name*
 
 ---
 
@@ -200,4 +208,3 @@ Feel free to fork the repo and submit a pull request.
 Give it a ⭐ on GitHub and share it!
 
 ---
-
