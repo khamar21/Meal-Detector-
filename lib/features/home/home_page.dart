@@ -1,188 +1,151 @@
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
+import '../history/history_page.dart';
 import 'providers.dart';
 
-class HomePage extends ConsumerWidget {
+class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
-  void _showImageSourceSheet(BuildContext context, WidgetRef ref) {
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      builder: (sheetContext) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.photo_library_outlined),
-                  title: const Text('Choose from gallery'),
-                  onTap: () async {
-                    Navigator.pop(sheetContext);
-                    await ref
-                        .read(predictNotifierProvider.notifier)
-                        .pickImage(ImageSource.gallery);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.photo_camera_outlined),
-                  title: const Text('Use camera'),
-                  onTap: () async {
-                    Navigator.pop(sheetContext);
-                    await ref
-                        .read(predictNotifierProvider.notifier)
-                        .pickImage(ImageSource.camera);
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+  @override
+  ConsumerState<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends ConsumerState<HomePage>
+    with SingleTickerProviderStateMixin {
+  final stt.SpeechToText _speech = stt.SpeechToText();
+  final TextEditingController _voiceController = TextEditingController();
+
+  late final AnimationController _micPulseController;
+
+  bool _speechEnabled = false;
+  bool _isListening = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _micPulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
     );
+    _initSpeech();
   }
 
-  String _formatTime(BuildContext context, DateTime timestamp) {
-    return TimeOfDay.fromDateTime(timestamp).format(context);
-  }
-
-  Widget _sectionTitle(String title, String subtitle) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          subtitle,
-          style: TextStyle(color: Colors.grey.shade700, height: 1.3),
-        ),
-      ],
-    );
-  }
-
-  Widget _actionButton({
-    required BuildContext context,
-    required WidgetRef ref,
-    required String label,
-    required IconData icon,
-    required VoidCallback onPressed,
-    bool filled = false,
-  }) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return filled
-        ? FilledButton.icon(
-            onPressed: onPressed,
-            icon: Icon(icon),
-            label: Text(label),
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
-            ),
-          )
-        : OutlinedButton.icon(
-            onPressed: onPressed,
-            icon: Icon(icon),
-            label: Text(label),
-            style: OutlinedButton.styleFrom(
-              side: BorderSide(color: colorScheme.outlineVariant),
-              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
-            ),
-          );
-  }
-
-  Widget _historyCard(BuildContext context, PredictionResult entry) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return Card(
-      elevation: 0,
-      color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Row(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: colorScheme.primary.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(
-                Icons.restaurant_outlined,
-                color: colorScheme.primary,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    entry.food,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    [
-                      if (entry.calories != null) entry.calories!,
-                      if (entry.confidence != null) entry.confidence!,
-                    ].join('  ·  '),
-                    style: TextStyle(color: Colors.grey.shade700),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              _formatTime(context, entry.timestamp),
-              style: TextStyle(
-                color: Colors.grey.shade600,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  Future<void> _initSpeech() async {
+    final enabled = await _speech.initialize();
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _speechEnabled = enabled;
+    });
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final image = ref.watch(imageProvider);
+  void dispose() {
+    _micPulseController.dispose();
+    _voiceController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    await ref.read(predictNotifierProvider.notifier).pickImage(source);
+  }
+
+  Future<void> _predictImage() async {
+    await ref.read(predictNotifierProvider.notifier).predict();
+  }
+
+  Future<void> _predictVoice() async {
+    final text = _voiceController.text.trim();
+    if (text.isEmpty) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Say or type a food name first.')),
+      );
+      return;
+    }
+    await ref.read(predictNotifierProvider.notifier).predictFromVoice(text);
+  }
+
+  Future<void> _toggleListening() async {
+    if (!_speechEnabled) {
+      if (!mounted) {
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Voice input is not available on device.'),
+        ),
+      );
+      return;
+    }
+
+    if (_isListening) {
+      await _speech.stop();
+      _micPulseController.stop();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isListening = false;
+      });
+      return;
+    }
+
+    final started = await _speech.listen(
+      onResult: (result) {
+        final words = result.recognizedWords;
+        _voiceController.value = TextEditingValue(
+          text: words,
+          selection: TextSelection.collapsed(offset: words.length),
+        );
+        ref.read(voiceDraftProvider.notifier).state = words;
+      },
+      onSoundLevelChange: (_) {},
+      listenMode: stt.ListenMode.confirmation,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _isListening = started;
+    });
+
+    if (started) {
+      _micPulseController.repeat(reverse: true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final pickedImage = ref.watch(imageProvider);
     final result = ref.watch(resultProvider);
-    final errorMessage = ref.watch(errorProvider);
-    final loading = ref.watch(loadingProvider);
-    final history = ref.watch(predictionHistoryProvider);
-    final bool hasResult = result != null || errorMessage != null;
+    final error = ref.watch(errorProvider);
+    final isLoading = ref.watch(loadingProvider);
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Calorie Snap'),
+        title: const Text('Food Calorie AI'),
         actions: [
           IconButton(
-            tooltip: 'Clear current selection',
-            onPressed: image == null && result == null && errorMessage == null
-                ? null
-                : () => ref
-                      .read(predictNotifierProvider.notifier)
-                      .clearSelection(),
-            icon: const Icon(Icons.refresh_outlined),
+            tooltip: 'Scan history',
+            onPressed: () {
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const HistoryPage()));
+            },
+            icon: const Icon(Icons.history),
           ),
         ],
       ),
@@ -191,533 +154,406 @@ class HomePage extends ConsumerWidget {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [Colors.orange.shade50, Colors.deepOrange.shade50],
+            colors: [
+              colorScheme.primaryContainer.withValues(alpha: 0.55),
+              colorScheme.surface,
+              colorScheme.secondaryContainer.withValues(alpha: 0.45),
+            ],
+            stops: const [0, 0.45, 1],
           ),
         ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Card(
-                  elevation: 0,
-                  color: Colors.white.withValues(alpha: 0.85),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+          children: [
+            _glassCard(
+              context,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Scan from image',
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 56,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                Colors.deepOrange.shade400,
-                                Colors.orange.shade300,
-                              ],
-                            ),
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          child: const Icon(
-                            Icons.restaurant_menu,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Smarter meal detection',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              SizedBox(height: 6),
-                              Text(
-                                'Capture or upload food photos, get calorie estimates, and review your recent scans in one place.',
-                                style: TextStyle(height: 1.4),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 18),
-                _sectionTitle(
-                  'Preview',
-                  'Select a food image to analyze it with the model.',
-                ),
-                const SizedBox(height: 12),
-                Card(
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: Container(
-                    clipBehavior: Clip.antiAlias,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(24),
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [Colors.white, Colors.orange.shade50],
+                  const SizedBox(height: 12),
+                  _ImagePreview(image: pickedImage),
+                  const SizedBox(height: 14),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: [
+                      FilledButton.icon(
+                        onPressed: isLoading
+                            ? null
+                            : () => _pickImage(ImageSource.camera),
+                        icon: const Icon(Icons.camera_alt_outlined),
+                        label: const Text('Camera'),
                       ),
-                    ),
-                    child: AspectRatio(
-                      aspectRatio: 1.15,
-                      child: Stack(
-                        children: [
-                          Positioned.fill(
-                            child: image != null
-                                ? Image.file(image, fit: BoxFit.cover)
-                                : Center(
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.image_search_outlined,
-                                          size: 72,
-                                          color: Colors.orange.shade300,
-                                        ),
-                                        const SizedBox(height: 14),
-                                        Text(
-                                          'No image selected yet',
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w700,
-                                            color: Colors.grey.shade800,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          'Choose a photo from the gallery or camera to begin.',
-                                          textAlign: TextAlign.center,
-                                          style: TextStyle(
-                                            color: Colors.grey.shade600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                          ),
-                          Positioned(
-                            left: 16,
-                            right: 16,
-                            bottom: 16,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 8,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withValues(alpha: 0.55),
-                                    borderRadius: BorderRadius.circular(999),
-                                  ),
-                                  child: Text(
-                                    loading
-                                        ? 'Analyzing image...'
-                                        : image == null
-                                        ? 'Awaiting photo'
-                                        : 'Ready to predict',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                ),
-                                if (image != null)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 8,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.9,
-                                      ),
-                                      borderRadius: BorderRadius.circular(999),
-                                    ),
-                                    child: Text(
-                                      'Selected',
-                                      style: TextStyle(
-                                        color: Colors.grey.shade900,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ],
+                      OutlinedButton.icon(
+                        onPressed: isLoading
+                            ? null
+                            : () => _pickImage(ImageSource.gallery),
+                        icon: const Icon(Icons.photo_library_outlined),
+                        label: const Text('Gallery'),
                       ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 18),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: [
-                    SizedBox(
-                      width: 170,
-                      child: _actionButton(
-                        context: context,
-                        ref: ref,
-                        label: 'Gallery',
-                        icon: Icons.photo_library_outlined,
-                        onPressed: () => _showImageSourceSheet(context, ref),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 170,
-                      child: _actionButton(
-                        context: context,
-                        ref: ref,
-                        label: loading ? 'Analyzing' : 'Predict',
-                        icon: loading
-                            ? Icons.hourglass_top
-                            : Icons.auto_awesome,
-                        filled: true,
-                        onPressed: loading || image == null
-                            ? () {}
-                            : () => ref
-                                  .read(predictNotifierProvider.notifier)
-                                  .predict(),
-                      ),
-                    ),
-                    SizedBox(
-                      ///////////////////
-                      width: 170,
-                      child: _actionButton(
-                        context: context,
-                        ref: ref,
-                        label: 'Clear',
-                        icon: Icons.delete_outline,
-                        onPressed:
-                            image == null &&
-                                result == null &&
-                                errorMessage == null
-                            ? () {}
+                      OutlinedButton.icon(
+                        onPressed: isLoading
+                            ? null
                             : () => ref
                                   .read(predictNotifierProvider.notifier)
                                   .clearSelection(),
+                        icon: const Icon(Icons.clear_rounded),
+                        label: const Text('Clear'),
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                if (hasResult)
-                  Card(
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    color: errorMessage == null
-                        ? Colors.green.shade50
-                        : Colors.red.shade50,
-                    child: Padding(
-                      padding: const EdgeInsets.all(18),
-                      child: errorMessage == null && result != null
-                          ? Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 44,
-                                      height: 44,
-                                      decoration: BoxDecoration(
-                                        color: Colors.green.shade100,
-                                        borderRadius: BorderRadius.circular(14),
-                                      ),
-                                      child: Icon(
-                                        Icons.check_circle_outline,
-                                        color: Colors.green.shade700,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            result.food,
-                                            style: const TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w800,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            'Prediction completed at ${_formatTime(context, result.timestamp)}',
-                                            style: TextStyle(
-                                              color: Colors.green.shade900,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 18),
-                                Wrap(
-                                  spacing: 10,
-                                  runSpacing: 10,
-                                  children: [
-                                    _InfoChip(
-                                      label: 'Food',
-                                      value: result.food,
-                                      color: Colors.green.shade700,
-                                    ),
-                                    if (result.calories != null)
-                                      _InfoChip(
-                                        label: 'Calories',
-                                        value: result.calories!,
-                                        color: Colors.deepOrange.shade700,
-                                      ),
-                                    if (result.confidence != null)
-                                      _InfoChip(
-                                        label: 'Confidence',
-                                        value: result.confidence!,
-                                        color: Colors.blue.shade700,
-                                      ),
-                                  ],
-                                ),
-                                if (result.ingredients.isNotEmpty ||
-                                    result.ingredientDetails.isNotEmpty) ...[
-                                  const SizedBox(height: 18),
-                                  Container(
-                                    width: double.infinity,
-                                    padding: const EdgeInsets.all(16),
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                        colors: [
-                                          Colors.green.shade50,
-                                          Colors.white,
-                                        ],
-                                      ),
-                                      borderRadius: BorderRadius.circular(22),
-                                      border: Border.all(
-                                        color: Colors.green.shade200,
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: Colors.green.shade100
-                                              .withValues(alpha: 0.35),
-                                          blurRadius: 18,
-                                          offset: const Offset(0, 8),
-                                        ),
-                                       ],
-                                    ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: result.ingredients
-                                          .asMap()
-                                          .entries
-                                          .expand(
-                                            (entry) => [
-                                              if (entry.key != 0)
-                                                Divider(
-                                                  height: 18,
-                                                  thickness: 1,
-                                                  color: Colors.green.shade100,
-                                                ),
-                                              _IngredientListItem(
-                                                index: entry.key + 1,
-                                                label: entry.value,
-                                              ),
-                                            ],
-                                          )
-                                          .toList(),
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            )
-                          : Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 44,
-                                      height: 44,
-                                      decoration: BoxDecoration(
-                                        color: Colors.red.shade100,
-                                        borderRadius: BorderRadius.circular(14),
-                                      ),
-                                      child: Icon(
-                                        Icons.error_outline,
-                                        color: Colors.red.shade700,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 12),
-                                    const Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Prediction failed',
-                                            style: TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w800,
-                                            ),
-                                          ),
-                                          SizedBox(height: 4),
-                                          Text(
-                                            'Check the backend connection or try another image.',
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  errorMessage ?? 'Unknown error',
-                                  style: TextStyle(
-                                    color: Colors.red.shade900,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                              ],
-                            ),
-                    ),
-                  ),
-                if (history.isNotEmpty) ...[
-                  const SizedBox(height: 22),
-                  _sectionTitle(
-                    'Recent scans',
-                    'Track the latest predictions without losing your place.',
+                    ],
                   ),
                   const SizedBox(height: 12),
-                  ListView.separated(
-                    itemCount: history.length,
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
-                    itemBuilder: (context, index) =>
-                        _historyCard(context, history[index]),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: (isLoading || pickedImage == null)
+                          ? null
+                          : _predictImage,
+                      icon: const Icon(Icons.auto_awesome),
+                      label: const Text('Predict From Image'),
+                    ),
                   ),
                 ],
-              ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            _glassCard(
+              context,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Voice input',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: _voiceController,
+                    onChanged: (value) =>
+                        ref.read(voiceDraftProvider.notifier).state = value,
+                    decoration: const InputDecoration(
+                      hintText: 'Example: I ate biryani',
+                      prefixIcon: Icon(Icons.record_voice_over_outlined),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      ScaleTransition(
+                        scale: Tween<double>(begin: 1, end: 1.08).animate(
+                          CurvedAnimation(
+                            parent: _micPulseController,
+                            curve: Curves.easeInOut,
+                          ),
+                        ),
+                        child: FilledButton.tonalIcon(
+                          onPressed: isLoading ? null : _toggleListening,
+                          icon: Icon(
+                            _isListening ? Icons.mic : Icons.mic_none_rounded,
+                          ),
+                          label: Text(_isListening ? 'Listening...' : 'Speak'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: FilledButton.icon(
+                          onPressed: isLoading ? null : _predictVoice,
+                          icon: const Icon(Icons.send_rounded),
+                          label: const Text('Predict From Voice'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
+            if (isLoading)
+              _glassCard(
+                context,
+                child: const Row(
+                  children: [
+                    SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2.4),
+                    ),
+                    SizedBox(width: 12),
+                    Expanded(child: Text('Analyzing your food...')),
+                  ],
+                ),
+              ),
+            if (error != null && error.trim().isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 14),
+                child: _glassCard(
+                  context,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Something went wrong',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(error),
+                      const SizedBox(height: 10),
+                      OutlinedButton.icon(
+                        onPressed: () => ref
+                            .read(predictNotifierProvider.notifier)
+                            .retryLastPrediction(),
+                        icon: const Icon(Icons.refresh_rounded),
+                        label: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 420),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              transitionBuilder: (child, animation) {
+                final slide = Tween<Offset>(
+                  begin: const Offset(0, 0.08),
+                  end: Offset.zero,
+                ).animate(animation);
+                return FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(position: slide, child: child),
+                );
+              },
+              child: result == null
+                  ? const SizedBox.shrink()
+                  : Padding(
+                      key: ValueKey<String>(result.id),
+                      padding: const EdgeInsets.only(top: 14),
+                      child: _ResultCard(result: result),
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _glassCard(BuildContext context, {required Widget child}) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 11, sigmaY: 11),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            color: colorScheme.surface.withValues(alpha: 0.62),
+            border: Border.all(
+              color: colorScheme.outline.withValues(alpha: 0.2),
             ),
           ),
+          child: child,
         ),
       ),
     );
   }
 }
 
-class _InfoChip extends StatelessWidget {
-  const _InfoChip({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
+class _ImagePreview extends StatelessWidget {
+  const _ImagePreview({required this.image});
 
-  final String label;
-  final String value;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.18)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label.toUpperCase(),
-            style: TextStyle(
-              color: color,
-              fontSize: 11,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.8,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _IngredientListItem extends StatelessWidget {
-  const _IngredientListItem({required this.index, required this.label});
-
-  final int index;
-  final String label;
+  final File? image;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 28,
-          height: 28,
-          alignment: Alignment.center,
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        height: 210,
+        width: double.infinity,
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        child: image == null
+            ? Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.add_photo_alternate_outlined,
+                    size: 38,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(height: 8),
+                  const Text('Image preview will appear here'),
+                ],
+              )
+            : Image.file(image!, fit: BoxFit.cover),
+      ),
+    );
+  }
+}
+
+class _ResultCard extends StatelessWidget {
+  const _ResultCard({required this.result});
+
+  final PredictionResult result;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 11, sigmaY: 11),
+        child: Container(
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: colorScheme.primary.withValues(alpha: 0.12),
-            shape: BoxShape.circle,
-          ),
-          child: Text(
-            index.toString(),
-            style: TextStyle(
-              color: colorScheme.primary,
-              fontSize: 13,
-              fontWeight: FontWeight.w800,
+            borderRadius: BorderRadius.circular(24),
+            color: colorScheme.surface.withValues(alpha: 0.68),
+            border: Border.all(
+              color: colorScheme.outline.withValues(alpha: 0.24),
             ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(top: 3),
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-                height: 1.35,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Prediction Result',
+                style: Theme.of(context).textTheme.titleLarge,
               ),
-            ),
+              const SizedBox(height: 12),
+              Text(
+                result.food,
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  _Tag(label: 'Calories: ${result.caloriesLabel}'),
+                  _Tag(label: 'Confidence: ${result.confidenceLabel}'),
+                  _Tag(
+                    label: result.sourceType == PredictionSource.voice
+                        ? 'Voice Scan'
+                        : 'Image Scan',
+                  ),
+                ],
+              ),
+              if (result.ingredients.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                Text(
+                  'Ingredients',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: result.ingredients
+                      .map((item) => _Tag(label: item))
+                      .toList(growable: false),
+                ),
+              ],
+              if (result.nutrition.hasData) ...[
+                const SizedBox(height: 14),
+                Text(
+                  'Nutrition',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                _NutritionBar(
+                  icon: Icons.fitness_center,
+                  label: 'Protein',
+                  value: result.nutrition.protein,
+                  max: 60,
+                ),
+                const SizedBox(height: 8),
+                _NutritionBar(
+                  icon: Icons.grain,
+                  label: 'Carbs',
+                  value: result.nutrition.carbs,
+                  max: 120,
+                ),
+                const SizedBox(height: 8),
+                _NutritionBar(
+                  icon: Icons.water_drop_outlined,
+                  label: 'Fat',
+                  value: result.nutrition.fat,
+                  max: 45,
+                ),
+              ],
+            ],
           ),
         ),
-        const SizedBox(width: 10),
-        Icon(Icons.chevron_right, size: 18, color: Colors.green.shade300),
+      ),
+    );
+  }
+}
+
+class _NutritionBar extends StatelessWidget {
+  const _NutritionBar({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.max,
+  });
+
+  final IconData icon;
+  final String label;
+  final double? value;
+  final double max;
+
+  @override
+  Widget build(BuildContext context) {
+    final amount = value ?? 0;
+    final progress = (amount / max).clamp(0.0, 1.0);
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 18),
+            const SizedBox(width: 8),
+            Expanded(child: Text(label)),
+            Text('${amount.toStringAsFixed(amount % 1 == 0 ? 0 : 1)} g'),
+          ],
+        ),
+        const SizedBox(height: 6),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(999),
+          child: LinearProgressIndicator(
+            value: progress.toDouble(),
+            minHeight: 8,
+          ),
+        ),
       ],
+    );
+  }
+}
+
+class _Tag extends StatelessWidget {
+  const _Tag({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Theme.of(
+          context,
+        ).colorScheme.secondaryContainer.withValues(alpha: 0.65),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(label),
     );
   }
 }

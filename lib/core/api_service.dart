@@ -2,78 +2,64 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  
-  static const String _deviceUrl = 'http://192.168.31.36:8000';
-
   static const Duration _timeout = Duration(seconds: 30);
+  static const String _fallbackWifiUrl = 'http://192.168.31.37:8000';
 
   static String get baseUrl {
-  
     const override = String.fromEnvironment('API_BASE_URL');
-    if (override.isNotEmpty) {
-      return override;
-    }
-
-    // ✅ Always use device IP for real device
-    return _deviceUrl;
+    if (override.isNotEmpty) return override;
+    // Default to the LAN backend so physical devices can connect without adb reverse.
+    return _fallbackWifiUrl;
   }
 
-  /// Test if backend is reachable
   static Future<bool> testConnection() async {
     try {
-      debugPrint('Testing connection to $baseUrl');
-
-      final response = await http
-          .get(Uri.parse('$baseUrl/'))
-          .timeout(_timeout);
-
-      final success = response.statusCode == 200;
-
-      debugPrint(
-        'Connection test: ${success ? 'OK' : 'FAILED (${response.statusCode})'}',
-      );
-
-      return success;
-    } catch (e) {
-      debugPrint('❌ Backend connection failed: $e');
-      rethrow;
+      final response = await http.get(Uri.parse('$baseUrl/')).timeout(_timeout);
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
     }
   }
 
-  /// Predict food from image file
   static Future<Map<String, dynamic>> predictFood(File image) async {
-    debugPrint('📤 Uploading image to $baseUrl/predict');
-
     try {
       final request = http.MultipartRequest(
         'POST',
         Uri.parse('$baseUrl/predict'),
       );
 
-      request.files.add(
-        await http.MultipartFile.fromPath('file', image.path),
-      );
+      request.files.add(await http.MultipartFile.fromPath('file', image.path));
 
-      final response = await request.send().timeout(_timeout);
-      final res = await http.Response.fromStream(response);
+      final streamed = await request.send().timeout(_timeout);
+      final res = await http.Response.fromStream(streamed);
 
-      debugPrint('📥 Response: ${res.body}');
+      final body = res.body.isNotEmpty
+          ? Map<String, dynamic>.from(jsonDecode(res.body))
+          : <String, dynamic>{};
 
       if (res.statusCode != 200) {
-        throw HttpException('Server error: ${res.statusCode}');
+        final msg =
+            (body['error'] ??
+                    body['detail'] ??
+                    'Server error: ${res.statusCode}')
+                .toString();
+        throw HttpException(msg);
       }
 
-      return jsonDecode(res.body);
+      return body;
     } on SocketException {
-      throw HttpException('❌ Cannot connect to backend. Check IP & WiFi');
+      throw HttpException(
+        'Cannot connect to backend. Check backend run and API_BASE_URL value.',
+      );
     } on TimeoutException {
-      throw HttpException('❌ Request timeout');
-    } catch (e) {
-      rethrow;
+      throw HttpException('Request timeout.');
     }
+  }
+
+  static Future<Map<String, dynamic>> predictFoodByText(String text) async {
+    throw HttpException('Text endpoint is not available on current backend.');
   }
 }
