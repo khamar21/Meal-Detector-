@@ -446,6 +446,30 @@ class _ResultCard extends StatelessWidget {
                   ),
                 ],
               ),
+              const SizedBox(height: 14),
+              _MetaRow(
+                icon: Icons.schedule_rounded,
+                label: 'Scanned at',
+                value: _formatTimestamp(result.timestamp),
+              ),
+              if (result.source != null &&
+                  result.source!.trim().isNotEmpty) ...[
+                const SizedBox(height: 8),
+                _MetaRow(
+                  icon: Icons.link_rounded,
+                  label: 'Source',
+                  value: result.source!,
+                ),
+              ],
+              if (result.voiceInput != null &&
+                  result.voiceInput!.trim().isNotEmpty) ...[
+                const SizedBox(height: 8),
+                _MetaRow(
+                  icon: Icons.mic_rounded,
+                  label: 'Voice query',
+                  value: result.voiceInput!,
+                ),
+              ],
               if (result.ingredients.isNotEmpty) ...[
                 const SizedBox(height: 14),
                 Text(
@@ -459,6 +483,32 @@ class _ResultCard extends StatelessWidget {
                   children: result.ingredients
                       .map((item) => _Tag(label: item))
                       .toList(growable: false),
+                ),
+              ],
+              if (result.ingredientDetails.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                Text(
+                  'Ingredient details',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                ...result.ingredientDetails.map(
+                  (item) => Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(Icons.local_dining_outlined, size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            item.displayLabel,
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
               if (result.nutrition.hasData) ...[
@@ -495,6 +545,52 @@ class _ResultCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _MetaRow extends StatelessWidget {
+  const _MetaRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: colorScheme.primary),
+        const SizedBox(width: 8),
+        Expanded(
+          child: RichText(
+            text: TextSpan(
+              style: Theme.of(context).textTheme.bodyMedium,
+              children: [
+                TextSpan(
+                  text: '$label: ',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                TextSpan(text: value),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+String _formatTimestamp(DateTime timestamp) {
+  final local = timestamp.toLocal();
+  return local.toString().split('.').first;
 }
 
 class _NutritionBar extends StatelessWidget {

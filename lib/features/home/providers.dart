@@ -13,7 +13,7 @@ enum PredictionSource { image, voice }
 
 class NutritionBreakdown {
   const NutritionBreakdown({this.protein, this.carbs, this.fat});
-
+  
   final double? protein;
   final double? carbs;
   final double? fat;
@@ -295,7 +295,7 @@ class PredictNotifier extends StateNotifier<void> {
     ref.read(loadingProvider.notifier).state = true;
     ref.read(errorProvider.notifier).state = null;
 
-    try {
+    try {                    
       final data = await ApiService.predictFoodByText(text);
       _consumePrediction(
         data,
@@ -375,8 +375,7 @@ class PredictNotifier extends StateNotifier<void> {
         })
         .take(_historyLimit)
         .toList(growable: false);
-
-    ref.read(predictionHistoryProvider.notifier).state = updated;
+        ref.read(predictionHistoryProvider.notifier).state = updated;
     _saveHistory(updated);
   }
 
@@ -556,7 +555,7 @@ class PredictNotifier extends StateNotifier<void> {
   Map<String, dynamic>? _firstMap(
     Map<String, dynamic> data,
     List<String> keys,
-  ) {
+  ) {    
     for (final key in keys) {
       final candidate = data[key];
       if (candidate is Map<String, dynamic>) {

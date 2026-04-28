@@ -51,6 +51,35 @@ class ScanDetailPage extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: 14),
+          _DetailPanel(
+            children: [
+              _DetailRow(
+                icon: Icons.schedule_rounded,
+                label: 'Scanned at',
+                value: _formatTimestamp(result.timestamp),
+              ),
+              const SizedBox(height: 10),
+              _DetailRow(
+                icon: result.sourceType == PredictionSource.voice
+                    ? Icons.mic_rounded
+                    : Icons.image_outlined,
+                label: 'Source type',
+                value: result.sourceType == PredictionSource.voice
+                    ? 'Voice input'
+                    : 'Image upload',
+              ),
+              if (result.source != null &&
+                  result.source!.trim().isNotEmpty) ...[
+                const SizedBox(height: 10),
+                _DetailRow(
+                  icon: Icons.link_rounded,
+                  label: 'Source path',
+                  value: result.source!,
+                ),
+              ],
+            ],
+          ),
           if (result.voiceInput != null &&
               result.voiceInput!.trim().isNotEmpty) ...[
             const SizedBox(height: 14),
@@ -89,6 +118,66 @@ class ScanDetailPage extends StatelessWidget {
           ],
         ],
       ),
+    );
+  }
+}
+
+class _DetailPanel extends StatelessWidget {
+  const _DetailPanel({required this.children});
+
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.14)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
+      ),
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  const _DetailRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 18, color: colorScheme.primary),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: Theme.of(context).textTheme.labelLarge),
+              const SizedBox(height: 2),
+              Text(value),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -189,4 +278,9 @@ class _Tag extends StatelessWidget {
       child: Text(label),
     );
   }
+}
+
+String _formatTimestamp(DateTime timestamp) {
+  final local = timestamp.toLocal();
+  return local.toString().split('.').first;
 }
