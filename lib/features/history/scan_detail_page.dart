@@ -14,108 +14,244 @@ class ScanDetailPage extends StatelessWidget {
     final image = result.source != null ? File(result.source!) : null;
     final hasImage = image != null && image.existsSync();
     final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
+    final sourceLabel = result.sourceType == PredictionSource.voice
+        ? 'Voice input'
+        : 'Image upload';
+    final sourceIcon = result.sourceType == PredictionSource.voice
+        ? Icons.mic_rounded
+        : Icons.image_outlined;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Scan Details')),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 22),
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: hasImage
-                ? Image.file(image, height: 240, fit: BoxFit.cover)
-                : Container(
-                    height: 240,
-                    color: colorScheme.surfaceContainerHighest,
-                    child: Icon(
-                      result.sourceType == PredictionSource.voice
-                          ? Icons.mic
-                          : Icons.image,
-                      size: 56,
-                    ),
-                  ),
-          ),
-          const SizedBox(height: 16),
-          Text(result.food, style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              _Tag(label: 'Calories: ${result.caloriesLabel}'),
-              _Tag(label: 'Confidence: ${result.confidenceLabel}'),
-              _Tag(
-                label: result.sourceType == PredictionSource.voice
-                    ? 'Voice'
-                    : 'Image',
-              ),
+      body: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              colorScheme.primaryContainer.withValues(alpha: 0.18),
+              colorScheme.surface,
+              colorScheme.surface,
             ],
+            stops: const [0, 0.24, 1],
           ),
-          const SizedBox(height: 14),
-          _DetailPanel(
-            children: [
-              _DetailRow(
-                icon: Icons.schedule_rounded,
-                label: 'Scanned at',
-                value: _formatTimestamp(result.timestamp),
-              ),
-              const SizedBox(height: 10),
-              _DetailRow(
-                icon: result.sourceType == PredictionSource.voice
-                    ? Icons.mic_rounded
-                    : Icons.image_outlined,
-                label: 'Source type',
-                value: result.sourceType == PredictionSource.voice
-                    ? 'Voice input'
-                    : 'Image upload',
-              ),
-              if (result.source != null &&
-                  result.source!.trim().isNotEmpty) ...[
-                const SizedBox(height: 10),
-                _DetailRow(
-                  icon: Icons.link_rounded,
-                  label: 'Source path',
-                  value: result.source!,
-                ),
-              ],
-            ],
-          ),
-          if (result.voiceInput != null &&
-              result.voiceInput!.trim().isNotEmpty) ...[
-            const SizedBox(height: 14),
-            Text('Voice query: "${result.voiceInput}"'),
-          ],
-          const SizedBox(height: 16),
-          if (result.nutrition.hasData) _NutritionSection(result: result),
-          if (result.ingredients.isNotEmpty) ...[
+        ),
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 22),
+          children: [
+            _HeroPreview(
+              image: image,
+              hasImage: hasImage,
+              fallbackIcon: sourceIcon,
+              sourceLabel: sourceLabel,
+              caloriesLabel: result.caloriesLabel,
+              confidenceLabel: result.confidenceLabel,
+            ),
             const SizedBox(height: 16),
-            Text('Ingredients', style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 8),
+            Text(result.food, style: textTheme.headlineSmall),
+            const SizedBox(height: 6),
+            Text(
+              'Scanned on ${_formatTimestamp(result.timestamp)}',
+              style: textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 12),
             Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: result.ingredients
-                  .map((item) => _Tag(label: item))
-                  .toList(growable: false),
+              children: [
+                _Tag(label: 'Calories ${result.caloriesLabel}'),
+                _Tag(label: 'Confidence ${result.confidenceLabel}'),
+                _Tag(label: sourceLabel),
+              ],
             ),
+            const SizedBox(height: 14),
+            _DetailPanel(
+              children: [
+                _DetailRow(
+                  icon: Icons.schedule_rounded,
+                  label: 'Scanned at',
+                  value: _formatTimestamp(result.timestamp),
+                ),
+                const SizedBox(height: 10),
+                _DetailRow(
+                  icon: sourceIcon,
+                  label: 'Source type',
+                  value: sourceLabel,
+                ),
+                if (result.source != null &&
+                    result.source!.trim().isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  _DetailRow(
+                    icon: Icons.link_rounded,
+                    label: 'Source path',
+                    value: result.source!,
+                  ),
+                ],
+              ],
+            ),
+            if (result.voiceInput != null &&
+                result.voiceInput!.trim().isNotEmpty) ...[
+              const SizedBox(height: 14),
+              _SectionCard(
+                title: 'Voice query',
+                child: Text('"${result.voiceInput}"'),
+              ),
+            ],
+            if (result.nutrition.hasData) ...[
+              const SizedBox(height: 16),
+              _SectionCard(
+                title: 'Nutrition breakdown',
+                child: _NutritionSection(result: result),
+              ),
+            ],
+            if (result.ingredients.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              _SectionCard(
+                title: 'Ingredients',
+                child: Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: result.ingredients
+                      .map((item) => _Tag(label: item))
+                      .toList(growable: false),
+                ),
+              ),
+            ],
+            if (result.ingredientDetails.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              _SectionCard(
+                title: 'Ingredient details',
+                child: Column(
+                  children: result.ingredientDetails
+                      .map(
+                        (item) => Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: _IngredientTile(detail: item),
+                        ),
+                      )
+                      .toList(growable: false),
+                ),
+              ),
+            ],
           ],
-          if (result.ingredientDetails.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Text(
-              'Ingredient details',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 8),
-            ...result.ingredientDetails.map(
-              (item) => ListTile(
-                dense: true,
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.local_dining_outlined),
-                title: Text(item.name),
-                subtitle: item.calories == null ? null : Text(item.calories!),
+        ),
+      ),
+    );
+  }
+}
+
+class _HeroPreview extends StatelessWidget {
+  const _HeroPreview({
+    required this.image,
+    required this.hasImage,
+    required this.fallbackIcon,
+    required this.sourceLabel,
+    required this.caloriesLabel,
+    required this.confidenceLabel,
+  });
+
+  final File? image;
+  final bool hasImage;
+  final IconData fallbackIcon;
+  final String sourceLabel;
+  final String caloriesLabel;
+  final String confidenceLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(28),
+      child: Stack(
+        children: [
+          SizedBox(
+            height: 260,
+            width: double.infinity,
+            child: hasImage
+                ? Image.file(image!, fit: BoxFit.cover)
+                : Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          colorScheme.primaryContainer,
+                          colorScheme.secondaryContainer,
+                        ],
+                      ),
+                    ),
+                    child: Icon(fallbackIcon, size: 64),
+                  ),
+          ),
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.black.withValues(alpha: 0.06),
+                    Colors.black.withValues(alpha: 0.34),
+                  ],
+                ),
               ),
             ),
-          ],
+          ),
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 16,
+            child: Row(
+              children: [
+                Expanded(
+                  child: _MiniStat(label: 'Calories', value: caloriesLabel),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: _MiniStat(label: 'Confidence', value: confidenceLabel),
+                ),
+              ],
+            ),
+          ),
+          Positioned(top: 16, left: 16, child: _Tag(label: sourceLabel)),
+        ],
+      ),
+    );
+  }
+}
+
+class _MiniStat extends StatelessWidget {
+  const _MiniStat({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: colorScheme.surface.withValues(alpha: 0.88),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: Theme.of(context).textTheme.labelSmall),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
         ],
       ),
     );
@@ -142,6 +278,36 @@ class _DetailPanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: children,
+      ),
+    );
+  }
+}
+
+class _SectionCard extends StatelessWidget {
+  const _SectionCard({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.12)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 12),
+          child,
+        ],
       ),
     );
   }
@@ -190,13 +356,7 @@ class _NutritionSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Nutrition breakdown',
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        const SizedBox(height: 8),
         _Bar(
           label: 'Protein',
           icon: Icons.fitness_center,
@@ -218,6 +378,52 @@ class _NutritionSection extends StatelessWidget {
           max: 45,
         ),
       ],
+    );
+  }
+}
+
+class _IngredientTile extends StatelessWidget {
+  const _IngredientTile({required this.detail});
+
+  final IngredientDetail detail;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: colorScheme.surface.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.local_dining_outlined, color: colorScheme.primary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  detail.name,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                if (detail.calories != null) ...[
+                  const SizedBox(height: 2),
+                  Text(
+                    detail.calories!,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
