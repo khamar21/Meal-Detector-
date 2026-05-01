@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -11,283 +13,295 @@ class DietDashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(dietViewModelProvider);
-
-    final consumed = state.totalCalories;
-    final target = state.dailyTargetCalories <= 0
-        ? 2000
-        : state.dailyTargetCalories;
-    final remaining = state.remainingCalories;
-    final progress = consumed / target;
-
-    final groupedMeals = _groupByMeal(state.entries);
+    final dietState = ref.watch(dietViewModelProvider);
+    final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Diet Dashboard')),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
-        children: [
-          AppCard(
-            child: Row(
+      appBar: AppBar(
+        title: const Text('Daily Diet'),
+        centerTitle: false,
+        elevation: 0,
+      ),
+      body: Builder(
+        builder: (context) {
+          final state = dietState;
+          final mealGroups = _groupByMeal(state.entries);
+          final totalCals = state.totalCalories;
+          final goal = state.dailyTargetCalories;
+          final progress = (totalCals / goal).clamp(0.0, 1.0);
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Progress Ring
+                Center(
+                  child: AnimatedCalorieRing(
+                    progress: progress,
+                    centerLabel: '${(progress * 100).toInt()}%',
+                    subLabel: 'Daily progress',
+                    size: 140,
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Meal Sections
+                ...mealGroups.entries.map((entry) {
+                  final mealType = entry.key;
+                  final items = entry.value;
+                  final mealCals = items.fold<double>(
+                    0,
+                    (sum, item) => sum + item.calories,
+                  );
+
+                  return _MealSection(
+                    mealType: mealType,
+                    items: items,
+                    totalCalories: mealCals,
+                  );
+                }),
+
+                const SizedBox(height: 20),
+
+                // Summary
+                if (state.entries.isNotEmpty)
+                  AppCard(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Daily Summary', style: textTheme.titleMedium),
+                        const SizedBox(height: 12),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Total Consumed', style: textTheme.bodyMedium),
+                            Text(
+                              '${totalCals.toStringAsFixed(0)} kcal',
+                              style: textTheme.titleMedium?.copyWith(
+                                color: AppColors.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Remaining', style: textTheme.bodyMedium),
+                            Text(
+                              '${(goal - totalCals).toStringAsFixed(0)} kcal',
+                              style: textTheme.titleMedium?.copyWith(
+                                color: totalCals > goal
+                                    ? const Color(0xFFC0392B)
+                                    : AppColors.secondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                if (state.entries.isEmpty)
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 60),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.restaurant_outlined,
+                            size: 64,
+                            color: Colors.grey[300],
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'No meals logged yet',
+                            style: textTheme.bodyLarge?.copyWith(
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Map<String, List<DietEntry>> _groupByMeal(List<DietEntry> entries) {
+    final groups = <String, List<DietEntry>>{
+      'breakfast': [],
+      'lunch': [],
+      'dinner': [],
+      'snack': [],
+    };
+
+    for (final entry in entries) {
+      final meal = entry.mealType.toLowerCase();
+      if (groups.containsKey(meal)) {
+        groups[meal]!.add(entry);
+      }
+    }
+
+    return groups..removeWhere((_, items) => items.isEmpty);
+  }
+}
+
+class _MealSection extends StatelessWidget {
+  const _MealSection({
+    required this.mealType,
+    required this.items,
+    required this.totalCalories,
+  });
+
+  final String mealType;
+  final List<DietEntry> items;
+  final double totalCalories;
+
+  IconData _getMealIcon(String type) {
+    return switch (type.toLowerCase()) {
+      'breakfast' => Icons.sunny,
+      'lunch' => Icons.light_mode,
+      'dinner' => Icons.dark_mode,
+      'snack' => Icons.bakery_dining,
+      _ => Icons.restaurant,
+    };
+  }
+
+  String _getMealLabel(String type) {
+    return '${type[0].toUpperCase()}${type.substring(1)}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: AppCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  _getMealIcon(mealType),
+                  color: AppColors.primary,
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '${consumed.toStringAsFixed(0)} kcal',
-                        style: Theme.of(context).textTheme.headlineMedium
-                            ?.copyWith(fontWeight: FontWeight.w800),
+                        _getMealLabel(mealType),
+                        style: textTheme.titleSmall,
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2),
                       Text(
-                        'Consumed of ${target.toStringAsFixed(0)} kcal goal',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        '${remaining.toStringAsFixed(0)} kcal remaining',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(
-                              color: remaining < 0
-                                  ? AppColors.accent
-                                  : AppColors.secondary,
-                            ),
+                        '${items.length} item${items.length != 1 ? 's' : ''}',
+                        style: textTheme.bodySmall?.copyWith(
+                          color: Colors.grey[600],
+                        ),
                       ),
                     ],
                   ),
                 ),
-                AnimatedCalorieRing(
-                  progress: progress,
-                  centerLabel:
-                      '${(progress * 100).clamp(0, 999).toStringAsFixed(0)}%',
-                  subLabel: 'Daily progress',
-                  size: 128,
+                Text(
+                  '${totalCalories.toStringAsFixed(0)} kcal',
+                  style: textTheme.titleSmall?.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(height: 16),
-          _ProfileSummaryCard(profile: state.profile),
-          const SizedBox(height: 16),
-          Text(
-            'Meals',
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 10),
-          ..._mealOrder.map((meal) {
-            final entries = groupedMeals[meal] ?? const <DietEntry>[];
-            return _MealSection(
-              title: _capitalize(meal),
-              icon: _mealIcon(meal),
-              entries: entries,
-              onRemove: (id) {
-                ref.read(dietViewModelProvider.notifier).removeEntry(id);
-              },
-            );
-          }),
-          const SizedBox(height: 8),
-          FilledButton.icon(
-            onPressed: () => _showAddFoodDialog(context, ref),
-            icon: const Icon(Icons.add),
-            label: const Text('Add manual food'),
-          ),
-        ],
-      ),
-    );
-  }
+            const SizedBox(height: 12),
+            ...items.asMap().entries.map((entry) {
+              final index = entry.key;
+              final item = entry.value;
 
-  Future<void> _showAddFoodDialog(BuildContext context, WidgetRef ref) async {
-    final nameController = TextEditingController();
-    final caloriesController = TextEditingController();
-    var mealType = 'snack';
-
-    await showDialog<void>(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Add food'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(labelText: 'Food name'),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: caloriesController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Calories'),
-              ),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                initialValue: mealType,
-                items: const [
-                  DropdownMenuItem(
-                    value: 'breakfast',
-                    child: Text('Breakfast'),
-                  ),
-                  DropdownMenuItem(value: 'lunch', child: Text('Lunch')),
-                  DropdownMenuItem(value: 'dinner', child: Text('Dinner')),
-                  DropdownMenuItem(value: 'snack', child: Text('Snack')),
-                ],
-                onChanged: (value) =>
-                    setState(() => mealType = value ?? 'snack'),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            FilledButton(
-              onPressed: () async {
-                final calories =
-                    double.tryParse(caloriesController.text.trim()) ?? 0;
-                await ref
-                    .read(dietViewModelProvider.notifier)
-                    .addManualFood(
-                      name: nameController.text.trim().isEmpty
-                          ? 'Manual food'
-                          : nameController.text.trim(),
-                      calories: calories,
-                      mealType: mealType,
-                    );
-                if (context.mounted) Navigator.pop(context);
-              },
-              child: const Text('Save'),
-            ),
+              return Padding(
+                padding: EdgeInsets.only(top: index > 0 ? 8 : 0),
+                child: _FoodItem(entry: item),
+              );
+            }).toList(),
           ],
         ),
       ),
     );
   }
-
-  static Map<String, List<DietEntry>> _groupByMeal(List<DietEntry> entries) {
-    final grouped = <String, List<DietEntry>>{};
-    for (final entry in entries) {
-      grouped.putIfAbsent(entry.mealType.toLowerCase(), () => []).add(entry);
-    }
-    return grouped;
-  }
-
-  static String _capitalize(String value) {
-    if (value.isEmpty) return value;
-    return value[0].toUpperCase() + value.substring(1);
-  }
-
-  static IconData _mealIcon(String mealType) {
-    switch (mealType) {
-      case 'breakfast':
-        return Icons.free_breakfast_outlined;
-      case 'lunch':
-        return Icons.lunch_dining_outlined;
-      case 'dinner':
-        return Icons.dinner_dining_outlined;
-      default:
-        return Icons.cookie_outlined;
-    }
-  }
 }
 
-const _mealOrder = ['breakfast', 'lunch', 'dinner', 'snack'];
+class _FoodItem extends StatelessWidget {
+  const _FoodItem({required this.entry});
 
-class _MealSection extends StatelessWidget {
-  const _MealSection({
-    required this.title,
-    required this.icon,
-    required this.entries,
-    required this.onRemove,
-  });
-
-  final String title;
-  final IconData icon;
-  final List<DietEntry> entries;
-  final ValueChanged<String> onRemove;
+  final DietEntry entry;
 
   @override
   Widget build(BuildContext context) {
-    return AppCard(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: AppColors.secondary),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-              ),
-              const Spacer(),
-              Text(
-                '${entries.fold<double>(0, (sum, item) => sum + item.calories).toStringAsFixed(0)} kcal',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: AppColors.secondary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          if (entries.isEmpty)
-            Text('No items yet', style: Theme.of(context).textTheme.bodyMedium)
-          else
-            ...entries.map(
-              (entry) => FoodItemCard(
-                title: entry.name,
-                subtitle: entry.loggedAt.toLocal().toString().split('.').first,
-                trailing: '${entry.calories.toStringAsFixed(0)} kcal',
-                icon: icon,
-                imagePath: entry.imagePath,
-                key: ValueKey(entry.id),
-              ),
-            ),
-          if (entries.isNotEmpty)
-            Align(
-              alignment: Alignment.centerRight,
-              child: OutlinedButton.icon(
-                onPressed: () => onRemove(entries.first.id),
-                icon: const Icon(Icons.remove_circle_outline),
-                label: const Text('Remove latest'),
-              ),
-            ),
-        ],
+    final textTheme = Theme.of(context).textTheme;
+    final image = entry.imagePath != null ? File(entry.imagePath!) : null;
+    final hasImage = image != null && image.existsSync();
+
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.background,
+        borderRadius: BorderRadius.circular(12),
       ),
-    );
-  }
-}
-
-class _ProfileSummaryCard extends StatelessWidget {
-  const _ProfileSummaryCard({required this.profile});
-
-  final UserProfile? profile;
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.all(10),
+      child: Row(
         children: [
-          Text('Profile', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 8),
-          Text(
-            profile == null
-                ? 'No profile yet'
-                : '${profile!.name} • ${profile!.goal}',
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: SizedBox(
+              width: 50,
+              height: 50,
+              child: hasImage
+                  ? Image.file(image, fit: BoxFit.cover)
+                  : Container(
+                      color: Colors.grey[200],
+                      child: Icon(
+                        Icons.restaurant,
+                        color: Colors.grey[400],
+                        size: 24,
+                      ),
+                    ),
+            ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  entry.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  entry.loggedAt.toString().split('.')[0],
+                  style: textTheme.bodySmall?.copyWith(color: Colors.grey[500]),
+                ),
+              ],
+            ),
+          ),
           Text(
-            profile == null
-                ? 'Add your age, height, weight, and goal in Profile tab.'
-                : 'Estimated calories: ${profile!.estimatedCalories.toStringAsFixed(0)} kcal',
+            '${entry.calories.toStringAsFixed(0)} kcal',
+            style: textTheme.titleSmall?.copyWith(
+              color: AppColors.accent,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
