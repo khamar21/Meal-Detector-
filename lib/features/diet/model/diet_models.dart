@@ -1,7 +1,5 @@
 import 'package:food_calorie_frontend/features/home/providers.dart';
 
-import '../../food_scan/model/prediction_models.dart';
-
 class DietEntry {
   const DietEntry({
     required this.id,

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/ui/app_colors.dart';
+import '../../../../core/ui/app_widgets.dart';
 import '../../model/diet_models.dart';
 import '../../viewmodel/diet_view_model.dart';
 
@@ -10,39 +12,83 @@ class DietDashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(dietViewModelProvider);
-    final theme = Theme.of(context);
+
+    final consumed = state.totalCalories;
+    final target = state.dailyTargetCalories <= 0
+        ? 2000
+        : state.dailyTargetCalories;
+    final remaining = state.remainingCalories;
+    final progress = consumed / target;
+
+    final groupedMeals = _groupByMeal(state.entries);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Diet Dashboard')),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
         children: [
-          _SummaryCard(
-            title: 'Today',
-            calories: state.totalCalories,
-            target: state.dailyTargetCalories,
-            remaining: state.remainingCalories,
+          AppCard(
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${consumed.toStringAsFixed(0)} kcal',
+                        style: Theme.of(context).textTheme.headlineMedium
+                            ?.copyWith(fontWeight: FontWeight.w800),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Consumed of ${target.toStringAsFixed(0)} kcal goal',
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        '${remaining.toStringAsFixed(0)} kcal remaining',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              color: remaining < 0
+                                  ? AppColors.accent
+                                  : AppColors.secondary,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+                AnimatedCalorieRing(
+                  progress: progress,
+                  centerLabel:
+                      '${(progress * 100).clamp(0, 999).toStringAsFixed(0)}%',
+                  subLabel: 'Daily progress',
+                  size: 128,
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 16),
-          _ProfileCard(profile: state.profile),
+          _ProfileSummaryCard(profile: state.profile),
           const SizedBox(height: 16),
-          Text('Today\'s food log', style: theme.textTheme.titleLarge),
+          Text(
+            'Meals',
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 10),
+          ..._mealOrder.map((meal) {
+            final entries = groupedMeals[meal] ?? const <DietEntry>[];
+            return _MealSection(
+              title: _capitalize(meal),
+              icon: _mealIcon(meal),
+              entries: entries,
+              onRemove: (id) {
+                ref.read(dietViewModelProvider.notifier).removeEntry(id);
+              },
+            );
+          }),
           const SizedBox(height: 8),
-          if (state.entries.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: Text(
-                'No foods logged yet. Add scan results or manual foods.',
-              ),
-            )
-          else
-            ...state.entries.map(
-              (entry) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _DietEntryTile(entry: entry),
-              ),
-            ),
-          const SizedBox(height: 16),
           FilledButton.icon(
             onPressed: () => _showAddFoodDialog(context, ref),
             icon: const Icon(Icons.add),
@@ -78,7 +124,7 @@ class DietDashboardScreen extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<String>(
-                value: mealType,
+                initialValue: mealType,
                 items: const [
                   DropdownMenuItem(
                     value: 'breakfast',
@@ -120,90 +166,131 @@ class DietDashboardScreen extends ConsumerWidget {
       ),
     );
   }
+
+  static Map<String, List<DietEntry>> _groupByMeal(List<DietEntry> entries) {
+    final grouped = <String, List<DietEntry>>{};
+    for (final entry in entries) {
+      grouped.putIfAbsent(entry.mealType.toLowerCase(), () => []).add(entry);
+    }
+    return grouped;
+  }
+
+  static String _capitalize(String value) {
+    if (value.isEmpty) return value;
+    return value[0].toUpperCase() + value.substring(1);
+  }
+
+  static IconData _mealIcon(String mealType) {
+    switch (mealType) {
+      case 'breakfast':
+        return Icons.free_breakfast_outlined;
+      case 'lunch':
+        return Icons.lunch_dining_outlined;
+      case 'dinner':
+        return Icons.dinner_dining_outlined;
+      default:
+        return Icons.cookie_outlined;
+    }
+  }
 }
 
-class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({
+const _mealOrder = ['breakfast', 'lunch', 'dinner', 'snack'];
+
+class _MealSection extends StatelessWidget {
+  const _MealSection({
     required this.title,
-    required this.calories,
-    required this.target,
-    required this.remaining,
+    required this.icon,
+    required this.entries,
+    required this.onRemove,
   });
 
   final String title;
-  final double calories;
-  final double target;
-  final double remaining;
+  final IconData icon;
+  final List<DietEntry> entries;
+  final ValueChanged<String> onRemove;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 12),
-            Text('Consumed: ${calories.toStringAsFixed(0)} kcal'),
-            Text('Target: ${target.toStringAsFixed(0)} kcal'),
-            Text('Remaining: ${remaining.toStringAsFixed(0)} kcal'),
-          ],
-        ),
+    return AppCard(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: AppColors.secondary),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const Spacer(),
+              Text(
+                '${entries.fold<double>(0, (sum, item) => sum + item.calories).toStringAsFixed(0)} kcal',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: AppColors.secondary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (entries.isEmpty)
+            Text('No items yet', style: Theme.of(context).textTheme.bodyMedium)
+          else
+            ...entries.map(
+              (entry) => FoodItemCard(
+                title: entry.name,
+                subtitle: entry.loggedAt.toLocal().toString().split('.').first,
+                trailing: '${entry.calories.toStringAsFixed(0)} kcal',
+                icon: icon,
+                imagePath: entry.imagePath,
+                key: ValueKey(entry.id),
+              ),
+            ),
+          if (entries.isNotEmpty)
+            Align(
+              alignment: Alignment.centerRight,
+              child: OutlinedButton.icon(
+                onPressed: () => onRemove(entries.first.id),
+                icon: const Icon(Icons.remove_circle_outline),
+                label: const Text('Remove latest'),
+              ),
+            ),
+        ],
       ),
     );
   }
 }
 
-class _ProfileCard extends StatelessWidget {
-  const _ProfileCard({required this.profile});
+class _ProfileSummaryCard extends StatelessWidget {
+  const _ProfileSummaryCard({required this.profile});
 
   final UserProfile? profile;
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Profile', style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 8),
-            Text(
-              profile == null
-                  ? 'No profile yet'
-                  : '${profile!.name} • ${profile!.goal}',
-            ),
-            Text(
-              profile == null
-                  ? 'Add your height, weight, age and goal in Profile.'
-                  : 'Estimated calories: ${profile!.estimatedCalories.toStringAsFixed(0)} kcal',
-            ),
-          ],
-        ),
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Profile', style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: 8),
+          Text(
+            profile == null
+                ? 'No profile yet'
+                : '${profile!.name} • ${profile!.goal}',
+          ),
+          const SizedBox(height: 4),
+          Text(
+            profile == null
+                ? 'Add your age, height, weight, and goal in Profile tab.'
+                : 'Estimated calories: ${profile!.estimatedCalories.toStringAsFixed(0)} kcal',
+          ),
+        ],
       ),
-    );
-  }
-}
-
-class _DietEntryTile extends StatelessWidget {
-  const _DietEntryTile({required this.entry});
-
-  final DietEntry entry;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      tileColor: Theme.of(
-        context,
-      ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      title: Text(entry.name),
-      subtitle: Text(
-        '${entry.mealType} • ${entry.loggedAt.toLocal().toString().split('.').first}',
-      ),
-      trailing: Text('${entry.calories.toStringAsFixed(0)} kcal'),
     );
   }
 }

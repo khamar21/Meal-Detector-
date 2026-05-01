@@ -800,7 +800,7 @@ class _ResultHero extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             hasImage
-                ? Image.file(image!, fit: BoxFit.cover)
+                ? Image.file(image, fit: BoxFit.cover)
                 : Container(
                     decoration: BoxDecoration(
                       gradient: LinearGradient(

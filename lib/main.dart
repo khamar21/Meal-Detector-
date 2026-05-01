@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'core/api_service.dart';
 import 'app/app_shell.dart';
+import 'core/ui/app_colors.dart';
 
 void main() {
   debugPrint('API_BASE_URL resolved to: ${ApiService.baseUrl}');
@@ -12,77 +13,115 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  ThemeData _buildTheme(Brightness brightness) {
-    final colorScheme = ColorScheme.fromSeed(
-      seedColor: const Color(0xFFFC6F3B),
-      brightness: brightness,
+  ThemeData _buildTheme() {
+    const colorScheme = ColorScheme(
+      brightness: Brightness.light,
+      primary: AppColors.primary,
+      onPrimary: Colors.white,
+      secondary: AppColors.secondary,
+      onSecondary: Colors.white,
+      error: Color(0xFFC0392B),
+      onError: Colors.white,
+      surface: AppColors.background,
+      onSurface: AppColors.text,
+      surfaceContainerHighest: Color(0xFFE9F9EF),
+      onSurfaceVariant: Color(0xFF4B5B52),
+      outline: Color(0xFFD3E7DA),
+      outlineVariant: Color(0xFFE2F1E8),
+      tertiary: AppColors.accent,
+      onTertiary: Color(0xFF3A2B02),
     );
 
-    final textTheme = GoogleFonts.urbanistTextTheme().copyWith(
-      headlineLarge: GoogleFonts.urbanist(
+    final textTheme = GoogleFonts.poppinsTextTheme().copyWith(
+      headlineLarge: GoogleFonts.poppins(
         fontWeight: FontWeight.w800,
-        letterSpacing: -0.6,
+        color: AppColors.text,
       ),
-      headlineMedium: GoogleFonts.urbanist(fontWeight: FontWeight.w800),
-      headlineSmall: GoogleFonts.urbanist(fontWeight: FontWeight.w700),
-      titleLarge: GoogleFonts.urbanist(fontWeight: FontWeight.w700),
-      titleMedium: GoogleFonts.urbanist(fontWeight: FontWeight.w700),
-      bodyLarge: GoogleFonts.urbanist(
+      headlineMedium: GoogleFonts.poppins(
+        fontWeight: FontWeight.w800,
+        color: AppColors.text,
+      ),
+      headlineSmall: GoogleFonts.poppins(
+        fontWeight: FontWeight.w700,
+        color: AppColors.text,
+      ),
+      titleLarge: GoogleFonts.poppins(
+        fontWeight: FontWeight.w700,
+        color: AppColors.text,
+      ),
+      titleMedium: GoogleFonts.poppins(
+        fontWeight: FontWeight.w700,
+        color: AppColors.text,
+      ),
+      bodyLarge: GoogleFonts.poppins(
         fontWeight: FontWeight.w500,
         height: 1.35,
+        color: AppColors.text,
       ),
-      bodyMedium: GoogleFonts.urbanist(
+      bodyMedium: GoogleFonts.poppins(
         fontWeight: FontWeight.w500,
         height: 1.35,
+        color: AppColors.text,
       ),
+      bodySmall: GoogleFonts.poppins(color: const Color(0xFF53635A)),
     );
 
     return ThemeData(
       useMaterial3: true,
       colorScheme: colorScheme,
       textTheme: textTheme,
-      scaffoldBackgroundColor: colorScheme.surface,
+      scaffoldBackgroundColor: AppColors.background,
       appBarTheme: AppBarTheme(
         centerTitle: false,
         elevation: 0,
         backgroundColor: Colors.transparent,
-        foregroundColor: colorScheme.onSurface,
+        foregroundColor: AppColors.text,
       ),
-      iconTheme: IconThemeData(color: colorScheme.onSurface),
+      iconTheme: const IconThemeData(color: AppColors.text),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(15),
           ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.secondary,
+          side: const BorderSide(color: AppColors.secondary),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(15),
           ),
         ),
       ),
       cardTheme: CardThemeData(
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        color: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        shadowColor: Colors.black.withValues(alpha: 0.08),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: colorScheme.outlineVariant),
+          borderSide: const BorderSide(color: Color(0xFFD8EBDD)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: colorScheme.outlineVariant),
+          borderSide: const BorderSide(color: Color(0xFFD8EBDD)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: colorScheme.primary, width: 1.4),
+          borderSide: const BorderSide(color: AppColors.primary, width: 1.4),
         ),
       ),
       visualDensity: VisualDensity.adaptivePlatformDensity,
@@ -93,9 +132,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      themeMode: ThemeMode.system,
-      theme: _buildTheme(Brightness.light),
-      darkTheme: _buildTheme(Brightness.dark),
+      theme: _buildTheme(),
       home: const AppShell(),
     );
   }

@@ -12,7 +12,7 @@ Flutter frontend for an AI-powered food calorie recognition app. The app lets us
 - Load healthier alternatives with calorie reduction details.
 - Maintain lightweight recent prediction history.
 - Built with Riverpod and Material 3.
-
+ 
 ## Tech Stack
 
 - Flutter

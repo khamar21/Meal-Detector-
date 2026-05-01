@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/diet/view/screens/diet_dashboard_screen.dart';
-import '../features/history/view/history_page.dart';
 import '../features/food_scan/view/screens/food_scan_screen.dart';
+import '../features/home/view/screens/home_dashboard_screen.dart';
 import '../features/user_profile/view/screens/profile_screen.dart';
 
 class AppShell extends ConsumerStatefulWidget {
@@ -16,35 +16,54 @@ class AppShell extends ConsumerStatefulWidget {
 class _AppShellState extends ConsumerState<AppShell> {
   int _index = 0;
 
-  final List<Widget> _pages = const [
-    FoodScanScreen(),
-    DietDashboardScreen(),
-    HistoryPage(),
-    ProfileScreen(),
+  late final List<Widget> _pages = [
+    HomeDashboardScreen(onScanTap: _openScanTab),
+    const FoodScanScreen(),
+    const DietDashboardScreen(),
+    const ProfileScreen(),
   ];
+
+  void _openScanTab() {
+    setState(() => _index = 1);
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(index: _index, children: _pages),
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 280),
+        switchInCurve: Curves.easeOut,
+        switchOutCurve: Curves.easeIn,
+        child: IndexedStack(
+          key: ValueKey(_index),
+          index: _index,
+          children: _pages,
+        ),
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
+        height: 74,
+        animationDuration: const Duration(milliseconds: 300),
         onDestinationSelected: (value) => setState(() => _index = value),
         destinations: const [
           NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home_rounded),
+            label: 'Home',
+          ),
+          NavigationDestination(
             icon: Icon(Icons.camera_alt_outlined),
+            selectedIcon: Icon(Icons.camera_alt_rounded),
             label: 'Scan',
           ),
           NavigationDestination(
             icon: Icon(Icons.restaurant_menu_outlined),
+            selectedIcon: Icon(Icons.restaurant_menu_rounded),
             label: 'Diet',
           ),
           NavigationDestination(
-            icon: Icon(Icons.history_outlined),
-            label: 'History',
-          ),
-          NavigationDestination(
             icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
             label: 'Profile',
           ),
         ],
