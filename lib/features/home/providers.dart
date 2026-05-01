@@ -13,7 +13,7 @@ enum PredictionSource { image, voice }
 
 class NutritionBreakdown {
   const NutritionBreakdown({this.protein, this.carbs, this.fat});
-  
+
   final double? protein;
   final double? carbs;
   final double? fat;
@@ -34,27 +34,115 @@ class NutritionBreakdown {
 }
 
 class IngredientDetail {
-  const IngredientDetail({required this.name, this.calories});
+  const IngredientDetail({
+    required this.name,
+    this.calories,
+    this.confidence,
+    this.confidencePercent,
+  });
 
   final String name;
   final String? calories;
+  final String? confidence;
+  final double? confidencePercent;
+
+  String get caloriesLabel {
+    if (calories == null || calories!.isEmpty) {
+      return 'N/A';
+    }
+    return calories!;
+  }
+
+  String get confidenceLabel {
+    if (confidencePercent != null) {
+      final fixed = confidencePercent!.toStringAsFixed(
+        confidencePercent! % 1 == 0 ? 0 : 1,
+      );
+      return '$fixed%';
+    }
+    return confidence?.trim().isNotEmpty == true ? confidence! : 'N/A';
+  }
 
   String get displayLabel {
-    if (calories == null || calories!.isEmpty) {
-      return name;
+    final parts = <String>[name];
+    if (calories != null && calories!.trim().isNotEmpty) {
+      parts.add(calories!);
     }
-    return '$name (${calories!})';
+    if (confidence != null && confidence!.trim().isNotEmpty) {
+      parts.add(confidenceLabel);
+    }
+    return parts.join(' • ');
   }
 
   Map<String, dynamic> toJson() {
-    return {'name': name, 'calories': calories};
+    return {
+      'name': name,
+      'calories': calories,
+      'confidence': confidence,
+      'confidencePercent': confidencePercent,
+    };
   }
 
   factory IngredientDetail.fromJson(Map<String, dynamic> json) {
     return IngredientDetail(
       name: (json['name'] ?? '').toString(),
       calories: json['calories']?.toString(),
+      confidence: json['confidence']?.toString(),
+      confidencePercent: _asDouble(json['confidencePercent']),
     );
+  }
+}
+
+class HealthierAlternative {
+  const HealthierAlternative({
+    required this.name,
+    this.calories,
+    this.reductionPercent,
+    this.benefit,
+  });
+
+  final String name;
+  final String? calories;
+  final double? reductionPercent;
+  final String? benefit;
+
+  String get caloriesLabel {
+    if (calories == null || calories!.trim().isEmpty) {
+      return 'N/A';
+    }
+    return calories!;
+  }
+
+  String get reductionLabel {
+    if (reductionPercent == null) {
+      return 'N/A';
+    }
+
+    final fixed = reductionPercent!.toStringAsFixed(
+      reductionPercent! % 1 == 0 ? 0 : 1,
+    );
+    return '$fixed%';
+  }
+
+  factory HealthierAlternative.fromJson(Map<String, dynamic> json) {
+    return HealthierAlternative(
+      name: (json['name'] ?? json['food'] ?? json['label'] ?? 'Alternative')
+          .toString(),
+      calories: json['calories']?.toString(),
+      reductionPercent: _asDouble(
+        json['reductionPercent'] ?? json['reduction'],
+      ),
+      benefit: json['benefit']?.toString(),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'calories': calories,
+      'reductionPercent': reductionPercent,
+      'benefit': benefit,
+    };
   }
 }
 
@@ -73,6 +161,11 @@ class PredictionResult {
     this.source,
     this.voiceInput,
     this.nutrition = const NutritionBreakdown(),
+    this.portionMultiplier,
+    this.adjustedCalories,
+    this.adjustedCaloriesKcal,
+    this.adjustedNutrition = const NutritionBreakdown(),
+    this.alternatives = const [],
   });
 
   final String id;
@@ -87,7 +180,14 @@ class PredictionResult {
   final String? voiceInput;
   final PredictionSource sourceType;
   final NutritionBreakdown nutrition;
+  final double? portionMultiplier;
+  final String? adjustedCalories;
+  final double? adjustedCaloriesKcal;
+  final NutritionBreakdown adjustedNutrition;
+  final List<HealthierAlternative> alternatives;
   final DateTime timestamp;
+
+  bool get hasAlternatives => alternatives.isNotEmpty;
 
   String get confidenceLabel {
     if (confidencePercent == null) {
@@ -113,6 +213,67 @@ class PredictionResult {
     return 'N/A';
   }
 
+  String get adjustedCaloriesLabel {
+    if (adjustedCalories != null && adjustedCalories!.trim().isNotEmpty) {
+      return adjustedCalories!;
+    }
+    if (adjustedCaloriesKcal != null) {
+      final fixed = adjustedCaloriesKcal!.toStringAsFixed(
+        adjustedCaloriesKcal! % 1 == 0 ? 0 : 1,
+      );
+      return '$fixed kcal';
+    }
+    return 'Not calculated yet';
+  }
+
+  bool get hasAdjustedData {
+    return adjustedCalories != null ||
+        adjustedCaloriesKcal != null ||
+        adjustedNutrition.hasData;
+  }
+
+  PredictionResult copyWith({
+    String? id,
+    String? food,
+    String? calories,
+    double? caloriesKcal,
+    String? confidence,
+    double? confidencePercent,
+    List<String>? ingredients,
+    List<IngredientDetail>? ingredientDetails,
+    String? source,
+    String? voiceInput,
+    PredictionSource? sourceType,
+    NutritionBreakdown? nutrition,
+    DateTime? timestamp,
+    double? portionMultiplier,
+    String? adjustedCalories,
+    double? adjustedCaloriesKcal,
+    NutritionBreakdown? adjustedNutrition,
+    List<HealthierAlternative>? alternatives,
+  }) {
+    return PredictionResult(
+      id: id ?? this.id,
+      food: food ?? this.food,
+      calories: calories ?? this.calories,
+      caloriesKcal: caloriesKcal ?? this.caloriesKcal,
+      confidence: confidence ?? this.confidence,
+      confidencePercent: confidencePercent ?? this.confidencePercent,
+      ingredients: ingredients ?? this.ingredients,
+      ingredientDetails: ingredientDetails ?? this.ingredientDetails,
+      source: source ?? this.source,
+      voiceInput: voiceInput ?? this.voiceInput,
+      sourceType: sourceType ?? this.sourceType,
+      nutrition: nutrition ?? this.nutrition,
+      timestamp: timestamp ?? this.timestamp,
+      portionMultiplier: portionMultiplier ?? this.portionMultiplier,
+      adjustedCalories: adjustedCalories ?? this.adjustedCalories,
+      adjustedCaloriesKcal: adjustedCaloriesKcal ?? this.adjustedCaloriesKcal,
+      adjustedNutrition: adjustedNutrition ?? this.adjustedNutrition,
+      alternatives: alternatives ?? this.alternatives,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -130,12 +291,18 @@ class PredictionResult {
       'sourceType': sourceType.name,
       'nutrition': nutrition.toJson(),
       'timestamp': timestamp.toIso8601String(),
+      'portionMultiplier': portionMultiplier,
+      'adjustedCalories': adjustedCalories,
+      'adjustedCaloriesKcal': adjustedCaloriesKcal,
+      'adjustedNutrition': adjustedNutrition.toJson(),
+      'alternatives': alternatives.map((item) => item.toJson()).toList(),
     };
   }
 
   factory PredictionResult.fromJson(Map<String, dynamic> json) {
     final rawIngredients = json['ingredients'];
     final rawIngredientDetails = json['ingredientDetails'];
+    final rawAlternatives = json['alternatives'];
 
     return PredictionResult(
       id: (json['id'] ?? '').toString(),
@@ -170,8 +337,42 @@ class PredictionResult {
       timestamp:
           DateTime.tryParse((json['timestamp'] ?? '').toString()) ??
           DateTime.now(),
+      portionMultiplier: _asDouble(json['portionMultiplier']),
+      adjustedCalories: json['adjustedCalories']?.toString(),
+      adjustedCaloriesKcal: _asDouble(json['adjustedCaloriesKcal']),
+      adjustedNutrition: json['adjustedNutrition'] is Map
+          ? NutritionBreakdown.fromJson(
+              Map<String, dynamic>.from(json['adjustedNutrition']),
+            )
+          : const NutritionBreakdown(),
+      alternatives: rawAlternatives is Iterable
+          ? rawAlternatives
+                .whereType<Map>()
+                .map(
+                  (item) => HealthierAlternative.fromJson(
+                    Map<String, dynamic>.from(item),
+                  ),
+                )
+                .toList(growable: false)
+          : const [],
     );
   }
+}
+
+class BatchPredictionItem {
+  const BatchPredictionItem({
+    required this.id,
+    required this.image,
+    this.result,
+    this.error,
+  });
+
+  final String id;
+  final File image;
+  final PredictionResult? result;
+  final String? error;
+
+  bool get isSuccess => result != null;
 }
 
 PredictionSource _parseSource(String value) {
@@ -180,12 +381,18 @@ PredictionSource _parseSource(String value) {
       : PredictionSource.image;
 }
 
-// State providers
 final imageProvider = StateProvider<File?>((ref) => null);
+final batchImagesProvider = StateProvider<List<File>>((ref) => const []);
+final batchModeProvider = StateProvider<bool>((ref) => false);
 final resultProvider = StateProvider<PredictionResult?>((ref) => null);
+final batchResultsProvider = StateProvider<List<BatchPredictionItem>>(
+  (ref) => const [],
+);
 final errorProvider = StateProvider<String?>((ref) => null);
 final loadingProvider = StateProvider<bool>((ref) => false);
+final processingLabelProvider = StateProvider<String?>((ref) => null);
 final voiceDraftProvider = StateProvider<String>((ref) => '');
+final portionMultiplierProvider = StateProvider<double>((ref) => 1.0);
 final predictionHistoryProvider = StateProvider<List<PredictionResult>>(
   (ref) => const [],
 );
@@ -195,14 +402,34 @@ class PredictNotifier extends StateNotifier<void> {
     initialize();
   }
 
-  static const _historyKey = 'scan_history_v2';
+  static const _historyKey = 'scan_history_v3';
   static const _historyLimit = 40;
+  static const _maxUploadSizeBytes = 15 * 1024 * 1024;
+  static const _allowedExtensions = [
+    'jpg',
+    'jpeg',
+    'png',
+    'webp',
+    'heic',
+    'heif',
+  ];
 
   final Ref ref;
   final ImagePicker picker = ImagePicker();
 
   Future<void> initialize() async {
     await _loadHistory();
+  }
+
+  Future<void> setBatchMode(bool enabled) async {
+    ref.read(batchModeProvider.notifier).state = enabled;
+    ref.read(errorProvider.notifier).state = null;
+    ref.read(resultProvider.notifier).state = null;
+
+    if (!enabled) {
+      ref.read(batchImagesProvider.notifier).state = const [];
+      ref.read(batchResultsProvider.notifier).state = const [];
+    }
   }
 
   Future<void> pickImage(ImageSource source) async {
@@ -212,9 +439,55 @@ class PredictNotifier extends StateNotifier<void> {
     }
 
     final compressed = await _compressImage(File(picked.path));
+    final validationError = await _validateUploadFile(compressed);
+    if (validationError != null) {
+      ref.read(errorProvider.notifier).state = validationError;
+      return;
+    }
+
     ref.read(imageProvider.notifier).state = compressed;
     ref.read(resultProvider.notifier).state = null;
+    ref.read(batchResultsProvider.notifier).state = const [];
     ref.read(errorProvider.notifier).state = null;
+  }
+
+  Future<void> pickBatchImages() async {
+    final picked = await picker.pickMultiImage(imageQuality: 95);
+    if (picked.isEmpty) {
+      return;
+    }
+
+    final compressedFiles = await Future.wait(
+      picked.map((item) => _compressImage(File(item.path))),
+    );
+
+    final current = List<File>.from(ref.read(batchImagesProvider));
+    for (final file in compressedFiles) {
+      final validationError = await _validateUploadFile(file);
+      if (validationError != null) {
+        ref.read(errorProvider.notifier).state = validationError;
+        return;
+      }
+
+      final alreadyAdded = current.any(
+        (existing) => existing.path == file.path,
+      );
+      if (!alreadyAdded) {
+        current.add(file);
+      }
+    }
+
+    ref.read(batchImagesProvider.notifier).state = current;
+    ref.read(resultProvider.notifier).state = null;
+    ref.read(errorProvider.notifier).state = null;
+  }
+
+  void removeBatchImage(String path) {
+    final updated = ref
+        .read(batchImagesProvider)
+        .where((item) => item.path != path)
+        .toList(growable: false);
+    ref.read(batchImagesProvider.notifier).state = updated;
   }
 
   Future<File> _compressImage(File source) async {
@@ -238,16 +511,52 @@ class PredictNotifier extends StateNotifier<void> {
     }
   }
 
+  Future<String?> _validateUploadFile(File file) async {
+    final extension = _fileExtension(file.path);
+    if (extension == null || !_allowedExtensions.contains(extension)) {
+      return 'Please choose a JPG, PNG, or WEBP image.';
+    }
+
+    try {
+      final size = await file.length();
+      if (size > _maxUploadSizeBytes) {
+        return 'File is too large. Please choose an image under 15 MB.';
+      }
+    } catch (_) {
+      return 'Could not read the selected image.';
+    }
+
+    return null;
+  }
+
+  String? _fileExtension(String path) {
+    final index = path.lastIndexOf('.');
+    if (index < 0 || index == path.length - 1) {
+      return null;
+    }
+
+    return path.substring(index + 1).toLowerCase();
+  }
+
   void clearSelection() {
     ref.read(imageProvider.notifier).state = null;
+    ref.read(batchImagesProvider.notifier).state = const [];
     ref.read(resultProvider.notifier).state = null;
+    ref.read(batchResultsProvider.notifier).state = const [];
     ref.read(errorProvider.notifier).state = null;
     ref.read(voiceDraftProvider.notifier).state = '';
+    ref.read(portionMultiplierProvider.notifier).state = 1.0;
   }
 
   Future<void> retryLastPrediction() async {
+    final batchImages = ref.read(batchImagesProvider);
     final image = ref.read(imageProvider);
     final voiceText = ref.read(voiceDraftProvider).trim();
+
+    if (ref.read(batchModeProvider) && batchImages.isNotEmpty) {
+      await predict();
+      return;
+    }
 
     if (image != null) {
       await predict();
@@ -260,26 +569,96 @@ class PredictNotifier extends StateNotifier<void> {
   }
 
   Future<void> predict() async {
+    if (ref.read(batchModeProvider)) {
+      await predictBatch();
+      return;
+    }
+
     final image = ref.read(imageProvider);
     if (image == null) {
       return;
     }
 
     ref.read(loadingProvider.notifier).state = true;
+    ref.read(processingLabelProvider.notifier).state =
+        'Analyzing your food image...';
     ref.read(errorProvider.notifier).state = null;
 
     try {
       final data = await ApiService.predictFood(image);
-      _consumePrediction(
+      final result = _buildPredictionResult(
         data,
         sourceType: PredictionSource.image,
         imagePath: image.path,
       );
+      _storeSingleResult(result);
     } catch (e) {
       ref.read(errorProvider.notifier).state = _cleanErrorMessage(e.toString());
       ref.read(resultProvider.notifier).state = null;
     } finally {
       ref.read(loadingProvider.notifier).state = false;
+      ref.read(processingLabelProvider.notifier).state = null;
+    }
+  }
+
+  Future<void> predictBatch() async {
+    final images = ref.read(batchImagesProvider);
+    if (images.isEmpty) {
+      ref.read(errorProvider.notifier).state = 'Add at least one image first.';
+      return;
+    }
+
+    ref.read(loadingProvider.notifier).state = true;
+    ref.read(processingLabelProvider.notifier).state =
+        'Analyzing ${images.length} images...';
+    ref.read(errorProvider.notifier).state = null;
+
+    try {
+      final data = await ApiService.predictFoodBatch(images);
+      final batchItems = <BatchPredictionItem>[];
+      final successfulResults = <PredictionResult>[];
+
+      for (var index = 0; index < images.length; index++) {
+        final image = images[index];
+        final payload = index < data.length ? data[index] : <String, dynamic>{};
+        final errorMessage = _readValue(payload, const [
+          'error',
+          'detail',
+          'message',
+        ]);
+
+        if (errorMessage != null && errorMessage.trim().isNotEmpty) {
+          batchItems.add(
+            BatchPredictionItem(
+              id: '${DateTime.now().microsecondsSinceEpoch}-$index',
+              image: image,
+              error: _cleanErrorMessage(errorMessage),
+            ),
+          );
+          continue;
+        }
+
+        final result = _buildPredictionResult(
+          payload,
+          sourceType: PredictionSource.image,
+          imagePath: image.path,
+        );
+        successfulResults.add(result);
+        batchItems.add(
+          BatchPredictionItem(id: result.id, image: image, result: result),
+        );
+      }
+
+      ref.read(batchResultsProvider.notifier).state = batchItems;
+      ref.read(resultProvider.notifier).state = null;
+      ref.read(errorProvider.notifier).state = null;
+      _saveResultsToHistory(successfulResults);
+    } catch (e) {
+      ref.read(errorProvider.notifier).state = _cleanErrorMessage(e.toString());
+      ref.read(batchResultsProvider.notifier).state = const [];
+    } finally {
+      ref.read(loadingProvider.notifier).state = false;
+      ref.read(processingLabelProvider.notifier).state = null;
     }
   }
 
@@ -293,24 +672,105 @@ class PredictNotifier extends StateNotifier<void> {
 
     ref.read(voiceDraftProvider.notifier).state = text;
     ref.read(loadingProvider.notifier).state = true;
+    ref.read(processingLabelProvider.notifier).state =
+        'Analyzing your voice input...';
     ref.read(errorProvider.notifier).state = null;
 
-    try {                    
+    try {
       final data = await ApiService.predictFoodByText(text);
-      _consumePrediction(
+      final result = _buildPredictionResult(
         data,
         sourceType: PredictionSource.voice,
         voiceInput: text,
       );
+      _storeSingleResult(result);
     } catch (e) {
       ref.read(errorProvider.notifier).state = _cleanErrorMessage(e.toString());
       ref.read(resultProvider.notifier).state = null;
     } finally {
       ref.read(loadingProvider.notifier).state = false;
+      ref.read(processingLabelProvider.notifier).state = null;
     }
   }
 
-  void _consumePrediction(
+  Future<void> adjustPortion(double multiplier) async {
+    final current = ref.read(resultProvider);
+    if (current == null) {
+      return;
+    }
+
+    ref.read(loadingProvider.notifier).state = true;
+    ref.read(processingLabelProvider.notifier).state =
+        'Updating portion calories...';
+    ref.read(errorProvider.notifier).state = null;
+    ref.read(portionMultiplierProvider.notifier).state = multiplier;
+
+    try {
+      final data = await ApiService.adjustPortion(
+        foodName: current.food,
+        multiplier: multiplier,
+        prediction: current.toJson(),
+      );
+
+      final payload = _resolvePredictionPayload(data);
+      final adjustedCaloriesRaw = _readValue(payload, const [
+        'adjustedCalories',
+        'adjusted_calories',
+        'calories',
+        'kcal',
+      ]);
+      final adjustedNutrition = _parseNutrition(
+        payload,
+        keys: const [
+          'adjustedNutrition',
+          'adjusted_nutrition',
+          'nutrition',
+          'nutrients',
+        ],
+      );
+
+      final updated = current.copyWith(
+        portionMultiplier: multiplier,
+        adjustedCalories: _formatCalories(adjustedCaloriesRaw),
+        adjustedCaloriesKcal: _parseNumber(adjustedCaloriesRaw),
+        adjustedNutrition: adjustedNutrition,
+      );
+      _storeSingleResult(updated);
+    } catch (e) {
+      ref.read(errorProvider.notifier).state = _cleanErrorMessage(e.toString());
+    } finally {
+      ref.read(loadingProvider.notifier).state = false;
+      ref.read(processingLabelProvider.notifier).state = null;
+    }
+  }
+
+  Future<void> loadHealthierAlternatives() async {
+    final current = ref.read(resultProvider);
+    if (current == null) {
+      return;
+    }
+
+    ref.read(loadingProvider.notifier).state = true;
+    ref.read(processingLabelProvider.notifier).state =
+        'Loading healthier options...';
+    ref.read(errorProvider.notifier).state = null;
+
+    try {
+      final data = await ApiService.healthierAlternatives(current.food);
+      final alternatives = data
+          .map(HealthierAlternative.fromJson)
+          .toList(growable: false);
+      final updated = current.copyWith(alternatives: alternatives);
+      _storeSingleResult(updated);
+    } catch (e) {
+      ref.read(errorProvider.notifier).state = _cleanErrorMessage(e.toString());
+    } finally {
+      ref.read(loadingProvider.notifier).state = false;
+      ref.read(processingLabelProvider.notifier).state = null;
+    }
+  }
+
+  PredictionResult _buildPredictionResult(
     Map<String, dynamic> data, {
     required PredictionSource sourceType,
     String? imagePath,
@@ -346,7 +806,7 @@ class PredictNotifier extends StateNotifier<void> {
             payload['ingredients'] ?? payload['ingredient'] ?? payload['items'],
           );
 
-    final result = PredictionResult(
+    return PredictionResult(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
       food: food,
       calories: _formatCalories(caloriesRaw),
@@ -360,30 +820,53 @@ class PredictNotifier extends StateNotifier<void> {
       sourceType: sourceType,
       nutrition: _parseNutrition(payload),
       timestamp: DateTime.now(),
+      portionMultiplier: _asDouble(payload['portionMultiplier']),
+      adjustedCalories: _formatCalories(
+        _readValue(payload, const ['adjustedCalories', 'adjusted_calories']),
+      ),
+      adjustedCaloriesKcal: _parseNumber(
+        _readValue(payload, const ['adjustedCalories', 'adjusted_calories']),
+      ),
+      adjustedNutrition: _parseNutrition(
+        payload,
+        keys: const ['adjustedNutrition', 'adjusted_nutrition'],
+      ),
+      alternatives: _parseAlternatives(payload),
     );
+  }
 
+  void _storeSingleResult(PredictionResult result) {
     ref.read(resultProvider.notifier).state = result;
     ref.read(errorProvider.notifier).state = null;
+    _saveResultsToHistory([result]);
+  }
 
-    final updated = [result, ...ref.read(predictionHistoryProvider)]
-        .fold<List<PredictionResult>>(<PredictionResult>[], (acc, item) {
-          final alreadyExists = acc.any((entry) => entry.id == item.id);
-          if (!alreadyExists) {
-            acc.add(item);
-          }
-          return acc;
-        })
-        .take(_historyLimit)
-        .toList(growable: false);
-        ref.read(predictionHistoryProvider.notifier).state = updated;
-    _saveHistory(updated);
+  void _saveResultsToHistory(List<PredictionResult> results) {
+    if (results.isEmpty) {
+      return;
+    }
+
+    final merged =
+        <PredictionResult>[...results, ...ref.read(predictionHistoryProvider)]
+            .fold<List<PredictionResult>>(<PredictionResult>[], (acc, item) {
+              final alreadyExists = acc.any((entry) => entry.id == item.id);
+              if (!alreadyExists) {
+                acc.add(item);
+              }
+              return acc;
+            })
+            .take(_historyLimit)
+            .toList(growable: false);
+
+    ref.read(predictionHistoryProvider.notifier).state = merged;
+    _saveHistory(merged);
   }
 
   Future<void> deleteHistoryItem(String id) async {
     final updated = ref
         .read(predictionHistoryProvider)
         .where((item) => item.id != id)
-        .toList();
+        .toList(growable: false);
     ref.read(predictionHistoryProvider.notifier).state = updated;
     await _saveHistory(updated);
   }
@@ -529,14 +1012,16 @@ class PredictNotifier extends StateNotifier<void> {
         .toList(growable: false);
   }
 
-  NutritionBreakdown _parseNutrition(Map<String, dynamic> data) {
-    final nutritionMap = _firstMap(data, const [
+  NutritionBreakdown _parseNutrition(
+    Map<String, dynamic> data, {
+    List<String> keys = const [
       'nutrition',
       'nutrients',
       'macros',
       'macro_breakdown',
-    ]);
-
+    ],
+  }) {
+    final nutritionMap = _firstMap(data, keys);
     final source = nutritionMap ?? data;
 
     final protein = _parseNumber(
@@ -555,7 +1040,7 @@ class PredictNotifier extends StateNotifier<void> {
   Map<String, dynamic>? _firstMap(
     Map<String, dynamic> data,
     List<String> keys,
-  ) {    
+  ) {
     for (final key in keys) {
       final candidate = data[key];
       if (candidate is Map<String, dynamic>) {
@@ -599,7 +1084,11 @@ class PredictNotifier extends StateNotifier<void> {
   List<IngredientDetail> _parseIngredientDetails(Map<String, dynamic> data) {
     final result = <IngredientDetail>[];
 
-    void addDetail(String rawName, dynamic rawCalories) {
+    void addDetail(
+      String rawName,
+      dynamic rawCalories, {
+      dynamic rawConfidence,
+    }) {
       final name = _stripWrapperCharacters(rawName);
       if (name.isEmpty) {
         return;
@@ -609,6 +1098,8 @@ class PredictNotifier extends StateNotifier<void> {
         IngredientDetail(
           name: name,
           calories: _formatCalories(rawCalories?.toString()),
+          confidence: rawConfidence?.toString(),
+          confidencePercent: _asDouble(rawConfidence),
         ),
       );
     }
@@ -630,9 +1121,14 @@ class PredictNotifier extends StateNotifier<void> {
             'kcal',
             'energy',
           ]);
+          final confidence = _readFirstMapValue(item, const [
+            'confidence',
+            'probability',
+            'score',
+          ]);
 
           if (name != null) {
-            addDetail(name, calories);
+            addDetail(name, calories, rawConfidence: confidence);
           }
         } else {
           addDetail(item.toString(), null);
@@ -664,6 +1160,8 @@ class PredictNotifier extends StateNotifier<void> {
             result[existingIndex] = IngredientDetail(
               name: existing.name,
               calories: existing.calories ?? parsedCalories,
+              confidence: existing.confidence,
+              confidencePercent: existing.confidencePercent,
             );
           } else {
             addDetail(keyName, value);
@@ -673,6 +1171,30 @@ class PredictNotifier extends StateNotifier<void> {
     }
 
     return result;
+  }
+
+  List<HealthierAlternative> _parseAlternatives(Map<String, dynamic> data) {
+    final candidates = [
+      data['alternatives'],
+      data['healthier_alternatives'],
+      data['options'],
+      data['results'],
+    ];
+
+    for (final candidate in candidates) {
+      if (candidate is Iterable) {
+        return candidate
+            .whereType<Map>()
+            .map(
+              (item) => HealthierAlternative.fromJson(
+                Map<String, dynamic>.from(item),
+              ),
+            )
+            .toList(growable: false);
+      }
+    }
+
+    return const [];
   }
 
   String? _readFirstMapValue(Map map, List<String> keys) {
@@ -686,7 +1208,10 @@ class PredictNotifier extends StateNotifier<void> {
   }
 
   String _cleanErrorMessage(String raw) {
-    return raw.replaceFirst('Exception: ', '').trim();
+    return raw
+        .replaceFirst('Exception: ', '')
+        .replaceFirst('HttpException: ', '')
+        .trim();
   }
 }
 
@@ -700,7 +1225,6 @@ double? _asDouble(dynamic value) {
   return double.tryParse(value.toString());
 }
 
-// Notifier provider
 final predictNotifierProvider = StateNotifierProvider<PredictNotifier, void>(
   (ref) => PredictNotifier(ref),
 );

@@ -1,7 +1,10 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../diet/model/diet_models.dart';
+import '../diet/viewmodel/diet_view_model.dart';
 import '../home/providers.dart';
 
 class ScanDetailPage extends StatelessWidget {
@@ -68,6 +71,25 @@ class ScanDetailPage extends StatelessWidget {
                 _Tag(label: sourceLabel),
               ],
             ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () {
+                  final entry = DietEntry.fromPrediction(result);
+                  ProviderScope.containerOf(
+                    context,
+                  ).read(dietViewModelProvider.notifier).addPrediction(entry);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Added to today\'s diet log.'),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.add_circle_outline),
+                label: const Text('Add to diet log'),
+              ),
+            ),
             const SizedBox(height: 14),
             _DetailPanel(
               children: [
@@ -121,6 +143,27 @@ class ScanDetailPage extends StatelessWidget {
                 ),
               ),
             ],
+            if (result.hasAdjustedData) ...[
+              const SizedBox(height: 16),
+              _SectionCard(
+                title: 'Portion adjusted calories',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      result.adjustedCaloriesLabel,
+                      style: textTheme.headlineSmall,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      result.adjustedNutrition.hasData
+                          ? 'Adjusted nutrition data is available from the backend.'
+                          : 'Only the adjusted calorie estimate was returned.',
+                    ),
+                  ],
+                ),
+              ),
+            ],
             if (result.ingredientDetails.isNotEmpty) ...[
               const SizedBox(height: 16),
               _SectionCard(
@@ -131,6 +174,22 @@ class ScanDetailPage extends StatelessWidget {
                         (item) => Padding(
                           padding: const EdgeInsets.only(bottom: 10),
                           child: _IngredientTile(detail: item),
+                        ),
+                      )
+                      .toList(growable: false),
+                ),
+              ),
+            ],
+            if (result.alternatives.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              _SectionCard(
+                title: 'Healthier alternatives',
+                child: Column(
+                  children: result.alternatives
+                      .map(
+                        (alternative) => Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: _AlternativeTile(alternative: alternative),
                         ),
                       )
                       .toList(growable: false),
@@ -419,9 +478,63 @@ class _IngredientTile extends StatelessWidget {
                     ),
                   ),
                 ],
+                const SizedBox(height: 2),
+                Text(
+                  'Confidence: ${detail.confidenceLabel}',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
               ],
             ),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AlternativeTile extends StatelessWidget {
+  const _AlternativeTile({required this.alternative});
+
+  final HealthierAlternative alternative;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: colorScheme.surface.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  alternative.name,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+              ),
+              _Tag(label: '${alternative.caloriesLabel} kcal'),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text('Reduction: ${alternative.reductionLabel}'),
+          if (alternative.benefit != null &&
+              alternative.benefit!.trim().isNotEmpty) ...[
+            const SizedBox(height: 4),
+            Text(
+              alternative.benefit!,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
         ],
       ),
     );

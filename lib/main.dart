@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'core/api_service.dart';
-import 'features/home/home_page.dart';
+import 'app/app_shell.dart';
 
 void main() {
   debugPrint('API_BASE_URL resolved to: ${ApiService.baseUrl}');
@@ -96,7 +96,7 @@ class MyApp extends StatelessWidget {
       themeMode: ThemeMode.system,
       theme: _buildTheme(Brightness.light),
       darkTheme: _buildTheme(Brightness.dark),
-      home: const HomePage(),
+      home: const AppShell(),
     );
   }
 }

@@ -1,12 +1,15 @@
 # Food Calorie Frontend
 
-Flutter frontend for an AI-powered food calorie recognition app. The app lets users pick or capture a food photo, sends it to a backend prediction API, and displays predicted food name, calories, confidence, ingredients, and recent scan history.
+Flutter frontend for an AI-powered food calorie recognition app. The app lets users pick or capture one food photo or upload a batch of images, sends them to a backend prediction API, and displays predicted food name, calories, confidence, nutrition, ingredients, portion-adjusted calories, healthier alternatives, and recent scan history.
 
 ## Key Features
 
 - Capture photos using camera or pick from gallery.
-- Send image to backend as multipart upload.
-- Show flexible prediction output (food, calories, confidence, ingredients).
+- Support single-image and batch uploads with preview before submit.
+- Send image or batch data to the backend as multipart upload.
+- Show flexible prediction output (food, calories, confidence, nutrition, ingredients).
+- Adjust portion multiplier and fetch updated calories from the backend.
+- Load healthier alternatives with calorie reduction details.
 - Maintain lightweight recent prediction history.
 - Built with Riverpod and Material 3.
 
@@ -68,11 +71,20 @@ The frontend expects these endpoints:
 
 - `GET /` for connection test
 - `POST /predict` for food classification
+- `POST /predict/batch`, `POST /batch-predict`, or `POST /predict-batch` for multiple image predictions
+- `POST /portion-adjust`, `POST /adjust-portion`, or `POST /predict/portion` for portion multiplier updates
+- `POST /healthier-alternatives`, `POST /alternatives`, or `POST /food/alternatives` for lighter option suggestions
 
 Upload format for `POST /predict`:
 
 - Content type: `multipart/form-data`
 - Image field name: `file`
+
+Batch upload field names that the frontend will try:
+
+- `files`
+- `images`
+- `file`
 
 Minimal response example:
 
@@ -85,12 +97,23 @@ Minimal response example:
 }
 ```
 
+Batch responses can return a `results`, `items`, or `predictions` array. Ingredient details may include confidence, and portion/alternatives responses can add `adjustedCalories`, `adjustedNutrition`, or `alternatives` data.
+
 ## Project Structure
 
 - [lib/main.dart](lib/main.dart): App entry point and theming
+- [lib/app/app_shell.dart](lib/app/app_shell.dart): Bottom-nav app shell for scan, diet, history, and profile
 - [lib/core/api_service.dart](lib/core/api_service.dart): API communication and timeout handling
-- [lib/features/home/home_page.dart](lib/features/home/home_page.dart): Main UI and user actions
-- [lib/features/home/providers.dart](lib/features/home/providers.dart): Prediction state and response parsing
+- [lib/features/food_scan/view/screens/food_scan_screen.dart](lib/features/food_scan/view/screens/food_scan_screen.dart): Food scan screen
+- [lib/features/food_scan/viewmodel/food_scan_view_model.dart](lib/features/food_scan/viewmodel/food_scan_view_model.dart): Food scan state and actions
+- [lib/features/food_scan/model/food_scan_models.dart](lib/features/food_scan/model/food_scan_models.dart): Prediction data models
+- [lib/features/diet/view/screens/diet_dashboard_screen.dart](lib/features/diet/view/screens/diet_dashboard_screen.dart): Diet dashboard
+- [lib/features/diet/viewmodel/diet_view_model.dart](lib/features/diet/viewmodel/diet_view_model.dart): Diet state and actions
+- [lib/features/diet/model/diet_models.dart](lib/features/diet/model/diet_models.dart): Diet and profile models
+- [lib/features/user_profile/view/screens/profile_screen.dart](lib/features/user_profile/view/screens/profile_screen.dart): Profile setup screen
+- [lib/features/user_profile/viewmodel/profile_view_model.dart](lib/features/user_profile/viewmodel/profile_view_model.dart): Profile state and actions
+- [lib/features/history/view/history_page.dart](lib/features/history/view/history_page.dart): History view layer
+- [lib/features/history/view/scan_detail_page.dart](lib/features/history/view/scan_detail_page.dart): History detail view
 
 ## Useful Commands
 
