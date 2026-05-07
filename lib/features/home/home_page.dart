@@ -159,9 +159,9 @@ class _HomePageState extends ConsumerState<HomePage>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              colorScheme.primaryContainer.withValues(alpha: 0.58),
+              colorScheme.primaryContainer.withValues(alpha: 0.6),
               colorScheme.surface,
-              colorScheme.secondaryContainer.withValues(alpha: 0.42),
+              colorScheme.secondaryContainer.withValues(alpha: 0.45),
             ],
             stops: const [0, 0.46, 1],
           ),
@@ -170,7 +170,7 @@ class _HomePageState extends ConsumerState<HomePage>
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 1080),
             child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 28),
               children: [
                 _glassCard(
                   context,
@@ -181,7 +181,7 @@ class _HomePageState extends ConsumerState<HomePage>
                         'Upload food photos, get calories, then refine the portion and find lighter alternatives.',
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 12),
                       Text(
                         'Single upload works for camera scans. Batch mode lets you send multiple images and compare all results in one pass.',
                         style: Theme.of(context).textTheme.bodyMedium,
@@ -189,7 +189,7 @@ class _HomePageState extends ConsumerState<HomePage>
                     ],
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 18),
                 _glassCard(
                   context,
                   child: Column(
@@ -199,7 +199,7 @@ class _HomePageState extends ConsumerState<HomePage>
                         'Upload mode',
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
                       ToggleButtons(
                         borderRadius: BorderRadius.circular(16),
                         isSelected: [!batchMode, batchMode],
@@ -224,7 +224,7 @@ class _HomePageState extends ConsumerState<HomePage>
                     ],
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 18),
                 _glassCard(
                   context,
                   child: Column(
@@ -234,12 +234,12 @@ class _HomePageState extends ConsumerState<HomePage>
                         batchMode ? 'Batch upload' : 'Single image upload',
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 10),
                       Text(
                         'Preview before submit. Images are validated for type and size first.',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
                       if (batchMode)
                         _BatchPreviewGrid(
                           images: batchImages,
@@ -251,7 +251,7 @@ class _HomePageState extends ConsumerState<HomePage>
                         )
                       else
                         _SingleImagePreview(image: pickedImage),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 16),
                       Wrap(
                         spacing: 10,
                         runSpacing: 10,
@@ -308,7 +308,7 @@ class _HomePageState extends ConsumerState<HomePage>
                                 ),
                               ],
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
                       SizedBox(
                         width: double.infinity,
                         child: FilledButton.icon(
@@ -329,13 +329,13 @@ class _HomePageState extends ConsumerState<HomePage>
                   ),
                 ),
                 if (isLoading) ...[
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 18),
                   _LoadingStateCard(
                     message: processingLabel ?? 'Analyzing your upload...',
                   ),
                 ],
                 if (error != null && error.trim().isNotEmpty) ...[
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 18),
                   _ErrorStateCard(
                     error: error,
                     onRetry: () => ref
@@ -344,14 +344,14 @@ class _HomePageState extends ConsumerState<HomePage>
                   ),
                 ],
                 if (batchResults.isNotEmpty) ...[
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 18),
                   _BatchSummaryCard(items: batchResults),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 18),
                   _BatchResultsGrid(items: batchResults),
                 ] else if (result != null) ...[
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 18),
                   _PredictionResultCard(result: result),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 18),
                   _PortionAdjusterCard(
                     result: result,
                     multiplier: portionMultiplier,
@@ -361,10 +361,10 @@ class _HomePageState extends ConsumerState<HomePage>
                     },
                     onApply: _adjustPortion,
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 18),
                   _AlternativesPanel(result: result, onLoad: _loadAlternatives),
                 ],
-                const SizedBox(height: 14),
+                const SizedBox(height: 18),
                 _glassCard(
                   context,
                   child: Column(
@@ -374,7 +374,7 @@ class _HomePageState extends ConsumerState<HomePage>
                         'Voice input',
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 12),
                       TextField(
                         controller: _voiceController,
                         onChanged: (value) =>
@@ -384,7 +384,7 @@ class _HomePageState extends ConsumerState<HomePage>
                           prefixIcon: Icon(Icons.record_voice_over_outlined),
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 14),
                       Row(
                         children: [
                           ScaleTransition(
@@ -406,7 +406,7 @@ class _HomePageState extends ConsumerState<HomePage>
                               ),
                             ),
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: FilledButton.icon(
                               onPressed: isLoading ? null : _predictVoice,
@@ -431,17 +431,26 @@ class _HomePageState extends ConsumerState<HomePage>
     final colorScheme = Theme.of(context).colorScheme;
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(24),
+      borderRadius: BorderRadius.circular(28),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 11, sigmaY: 11),
+        filter: ImageFilter.blur(sigmaX: 13, sigmaY: 13),
         child: Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            color: colorScheme.surface.withValues(alpha: 0.64),
+            borderRadius: BorderRadius.circular(28),
+            color: colorScheme.surface.withValues(alpha: 0.68),
             border: Border.all(
-              color: colorScheme.outline.withValues(alpha: 0.18),
+              color: colorScheme.outline.withValues(alpha: 0.22),
+              width: 1.2,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.08),
+                blurRadius: 24,
+                offset: const Offset(0, 8),
+                spreadRadius: -4,
+              ),
+            ],
           ),
           child: child,
         ),
@@ -461,13 +470,25 @@ class _LoadingStateCard extends StatelessWidget {
       context,
       child: Row(
         children: [
-          const SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(strokeWidth: 2.4),
+          SizedBox(
+            width: 26,
+            height: 26,
+            child: CircularProgressIndicator(
+              strokeWidth: 2.8,
+              valueColor: AlwaysStoppedAnimation<Color>(
+                Theme.of(context).colorScheme.primary,
+              ),
+            ),
           ),
-          const SizedBox(width: 12),
-          Expanded(child: Text(message)),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              message,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+            ),
+          ),
         ],
       ),
     );
@@ -515,22 +536,53 @@ class _SingleImagePreview extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(24),
       child: Container(
-        height: 240,
+        height: 260,
         width: double.infinity,
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        decoration: BoxDecoration(
+          color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
+          gradient: image == null
+              ? LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    colorScheme.primaryContainer.withValues(alpha: 0.4),
+                    colorScheme.secondaryContainer.withValues(alpha: 0.3),
+                  ],
+                )
+              : null,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
         child: image == null
             ? Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.add_photo_alternate_outlined,
-                    size: 38,
-                    color: colorScheme.onSurfaceVariant,
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: colorScheme.primary.withValues(alpha: 0.1),
+                    ),
+                    child: Icon(
+                      Icons.add_photo_alternate_outlined,
+                      size: 44,
+                      color: colorScheme.primary,
+                    ),
                   ),
-                  const SizedBox(height: 8),
-                  const Text('Image preview will appear here'),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Image preview will appear here',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
                 ],
               )
             : Image.file(image!, fit: BoxFit.cover),
@@ -550,27 +602,49 @@ class _BatchPreviewGrid extends StatelessWidget {
     if (images.isEmpty) {
       return Container(
         width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 16),
+        padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
         decoration: BoxDecoration(
           color: Theme.of(
             context,
-          ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.38),
-          borderRadius: BorderRadius.circular(18),
+          ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
+          borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: Theme.of(
               context,
-            ).colorScheme.outline.withValues(alpha: 0.14),
+            ).colorScheme.outline.withValues(alpha: 0.18),
+            width: 1.2,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Column(
           children: [
-            Icon(
-              Icons.photo_library_outlined,
-              size: 38,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.1),
+              ),
+              child: Icon(
+                Icons.photo_library_outlined,
+                size: 40,
+                color: Theme.of(context).colorScheme.primary,
+              ),
             ),
-            const SizedBox(height: 8),
-            const Text('No batch images selected yet'),
+            const SizedBox(height: 12),
+            Text(
+              'No batch images selected yet',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
           ],
         ),
       );
@@ -581,8 +655,8 @@ class _BatchPreviewGrid extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        mainAxisSpacing: 10,
-        crossAxisSpacing: 10,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
         childAspectRatio: 1,
       ),
       itemCount: images.length,
@@ -604,7 +678,7 @@ class _BatchThumb extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(20),
       child: Stack(
         fit: StackFit.expand,
         children: [
@@ -617,16 +691,25 @@ class _BatchThumb extends StatelessWidget {
                   end: Alignment.bottomCenter,
                   colors: [
                     Colors.transparent,
-                    Colors.black.withValues(alpha: 0.44),
+                    Colors.black.withValues(alpha: 0.5),
                   ],
                 ),
               ),
             ),
           ),
+          Positioned.fill(
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: null,
+                hoverColor: Colors.black.withValues(alpha: 0.1),
+              ),
+            ),
+          ),
           Positioned(
-            left: 10,
-            right: 10,
-            bottom: 10,
+            left: 12,
+            right: 12,
+            bottom: 12,
             child: Row(
               children: [
                 Expanded(
@@ -645,6 +728,9 @@ class _BatchThumb extends StatelessWidget {
                     onPressed: () => onRemove!(image.path),
                     icon: Icon(Icons.close_rounded, color: colorScheme.error),
                     visualDensity: VisualDensity.compact,
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.white.withValues(alpha: 0.9),
+                    ),
                   ),
               ],
             ),
@@ -792,9 +878,9 @@ class _ResultHero extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(26),
+      borderRadius: BorderRadius.circular(28),
       child: SizedBox(
-        height: 240,
+        height: 260,
         width: double.infinity,
         child: Stack(
           fit: StackFit.expand,
@@ -814,7 +900,7 @@ class _ResultHero extends StatelessWidget {
                     ),
                     child: Icon(
                       Icons.restaurant_outlined,
-                      size: 64,
+                      size: 68,
                       color: colorScheme.onPrimaryContainer,
                     ),
                   ),
@@ -825,17 +911,17 @@ class _ResultHero extends StatelessWidget {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.black.withValues(alpha: 0.06),
-                      Colors.black.withValues(alpha: 0.38),
+                      Colors.black.withValues(alpha: 0.08),
+                      Colors.black.withValues(alpha: 0.42),
                     ],
                   ),
                 ),
               ),
             ),
             Positioned(
-              left: 14,
-              right: 14,
-              bottom: 14,
+              left: 16,
+              right: 16,
+              bottom: 16,
               child: Row(
                 children: [
                   Expanded(
@@ -844,7 +930,7 @@ class _ResultHero extends StatelessWidget {
                       value: result.caloriesLabel,
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: _MiniStat(
                       label: 'Confidence',
@@ -1036,12 +1122,23 @@ class _AlternativeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(
           context,
-        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.42),
-        borderRadius: BorderRadius.circular(18),
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.52),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.12),
+          width: 0.8,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1051,13 +1148,15 @@ class _AlternativeCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   alternative.name,
-                  style: Theme.of(context).textTheme.titleMedium,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
               _Tag(label: '${alternative.caloriesLabel} kcal'),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -1236,7 +1335,7 @@ class _BatchResultCard extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 8),
-                        Text(
+                        Text(kTypeVideo
                           item.error ??
                               'The backend could not process this image.',
                         ),
@@ -1333,21 +1432,35 @@ class _MiniStat extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: colorScheme.surface.withValues(alpha: 0.9),
-        borderRadius: BorderRadius.circular(18),
+        color: colorScheme.surface.withValues(alpha: 0.95),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.12),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: Theme.of(context).textTheme.labelSmall),
-          const SizedBox(height: 2),
+          Text(
+            label,
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 4),
           Text(
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.titleMedium,
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
         ],
       ),
@@ -1391,19 +1504,41 @@ class _SummaryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Theme.of(
           context,
-        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
-        borderRadius: BorderRadius.circular(18),
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.1),
+          width: 0.8,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: Theme.of(context).textTheme.labelLarge),
-          const SizedBox(height: 4),
-          Text(value, style: Theme.of(context).textTheme.titleMedium),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
         ],
       ),
     );
@@ -1459,14 +1594,23 @@ class _Tag extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
         color: Theme.of(
           context,
-        ).colorScheme.secondaryContainer.withValues(alpha: 0.62),
+        ).colorScheme.primaryContainer.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+          width: 0.8,
+        ),
       ),
-      child: Text(label),
+      child: Text(
+        label,
+        style: Theme.of(
+          context,
+        ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
+      ),
     );
   }
 }
@@ -1475,17 +1619,26 @@ Widget _shellCard(BuildContext context, {required Widget child}) {
   final colorScheme = Theme.of(context).colorScheme;
 
   return ClipRRect(
-    borderRadius: BorderRadius.circular(24),
+    borderRadius: BorderRadius.circular(28),
     child: BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 11, sigmaY: 11),
+      filter: ImageFilter.blur(sigmaX: 13, sigmaY: 13),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          color: colorScheme.surface.withValues(alpha: 0.64),
+          borderRadius: BorderRadius.circular(28),
+          color: colorScheme.surface.withValues(alpha: 0.68),
           border: Border.all(
-            color: colorScheme.outline.withValues(alpha: 0.18),
+            color: colorScheme.outline.withValues(alpha: 0.22),
+            width: 1.2,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 24,
+              offset: const Offset(0, 8),
+              spreadRadius: -4,
+            ),
+          ],
         ),
         child: child,
       ),

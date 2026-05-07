@@ -28,16 +28,16 @@ class HistoryPage extends ConsumerWidget {
       body: history.isEmpty
           ? _EmptyHistory(onBack: () => Navigator.of(context).pop())
           : ListView.separated(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
+              padding: const EdgeInsets.fromLTRB(18, 12, 18, 24),
               itemCount: history.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final item = history[index];
                 final image = item.source != null ? File(item.source!) : null;
                 final hasImage = image != null && image.existsSync();
 
                 return InkWell(
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(20),
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
@@ -46,21 +46,34 @@ class HistoryPage extends ConsumerWidget {
                     );
                   },
                   child: Ink(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(18),
+                      borderRadius: BorderRadius.circular(20),
                       color: Theme.of(context)
                           .colorScheme
                           .surfaceContainerHighest
-                          .withValues(alpha: 0.45),
+                          .withValues(alpha: 0.52),
+                      border: Border.all(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.outline.withValues(alpha: 0.1),
+                        width: 0.8,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.04),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                     child: Row(
                       children: [
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(14),
                           child: SizedBox(
-                            width: 66,
-                            height: 66,
+                            width: 72,
+                            height: 72,
                             child: hasImage
                                 ? Image.file(image, fit: BoxFit.cover)
                                 : Container(
@@ -71,11 +84,12 @@ class HistoryPage extends ConsumerWidget {
                                       item.sourceType == PredictionSource.voice
                                           ? Icons.mic
                                           : Icons.image,
+                                      size: 28,
                                     ),
                                   ),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 14),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,17 +98,29 @@ class HistoryPage extends ConsumerWidget {
                                 item.food,
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
-                                style: Theme.of(context).textTheme.titleMedium,
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w700),
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                item.caloriesLabel,
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                item.caloriesLabel,
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
                                 _formatDate(item.timestamp),
-                                style: Theme.of(context).textTheme.bodySmall,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurfaceVariant,
+                                    ),
                               ),
                             ],
                           ),
@@ -154,26 +180,42 @@ class _EmptyHistory extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
+        padding: const EdgeInsets.symmetric(horizontal: 28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.history_toggle_off,
-              size: 54,
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            Container(
+              padding: const EdgeInsets.all(18),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: colorScheme.primary.withValues(alpha: 0.12),
+              ),
+              child: Icon(
+                Icons.history_toggle_off,
+                size: 58,
+                color: colorScheme.primary,
+              ),
             ),
-            const SizedBox(height: 12),
-            Text('No scans yet', style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 8),
+            const SizedBox(height: 16),
+            Text(
+              'No scans yet',
+              style: Theme.of(
+                context,
+              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 10),
             Text(
               'Your image and voice predictions will appear here.',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 20),
             OutlinedButton.icon(
               onPressed: onBack,
               icon: const Icon(Icons.arrow_back_rounded),

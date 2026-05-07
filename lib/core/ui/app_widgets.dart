@@ -8,9 +8,9 @@ class AppCard extends StatelessWidget {
   const AppCard({
     required this.child,
     super.key,
-    this.padding = const EdgeInsets.all(16),
+    this.padding = const EdgeInsets.all(20),
     this.margin,
-    this.radius = 18,
+    this.radius = 20,
   });
 
   final Widget child;
@@ -25,7 +25,11 @@ class AppCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(radius),
-        boxShadow: AppColors.softShadow,
+        boxShadow: AppColors.elevatedShadow,
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.08),
+          width: 0.8,
+        ),
       ),
       child: Padding(padding: padding, child: child),
     );
@@ -51,9 +55,10 @@ class GradientHeader extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         gradient: AppColors.headerGradient,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: AppColors.elevatedShadow,
       ),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(24),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -65,20 +70,20 @@ class GradientHeader extends StatelessWidget {
                   title,
                   style: textTheme.headlineSmall?.copyWith(
                     color: Colors.white,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 Text(
                   subtitle,
                   style: textTheme.bodyMedium?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.95),
+                    color: Colors.white.withValues(alpha: 0.98),
                   ),
                 ),
               ],
             ),
           ),
-          ?trailing,
+          if (trailing != null) trailing!,
         ],
       ),
     );
@@ -104,19 +109,34 @@ class NutritionCard extends StatelessWidget {
     final tone = color ?? Theme.of(context).colorScheme.primary;
 
     return AppCard(
-      radius: 16,
+      radius: 18,
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: tone),
-          const SizedBox(height: 10),
-          Text(title, style: Theme.of(context).textTheme.labelLarge),
-          const SizedBox(height: 4),
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: tone.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: tone, size: 20),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 6),
           Text(
             value,
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              color: tone,
+            ),
           ),
         ],
       ),
@@ -155,14 +175,14 @@ class AnimatedCalorieRing extends StatelessWidget {
             children: [
               CircularProgressIndicator(
                 value: 1,
-                strokeWidth: 12,
+                strokeWidth: 14,
                 valueColor: AlwaysStoppedAnimation(
-                  Colors.green.withValues(alpha: 0.12),
+                  Colors.green.withValues(alpha: 0.15),
                 ),
               ),
               CircularProgressIndicator(
                 value: value,
-                strokeWidth: 12,
+                strokeWidth: 14,
                 strokeCap: StrokeCap.round,
                 valueColor: const AlwaysStoppedAnimation(AppColors.primary),
               ),
@@ -175,10 +195,12 @@ class AnimatedCalorieRing extends StatelessWidget {
                       style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(fontWeight: FontWeight.w800),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     Text(
                       subLabel,
-                      style: Theme.of(context).textTheme.bodySmall,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),

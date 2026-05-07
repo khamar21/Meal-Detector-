@@ -22,10 +22,10 @@ class ScanDetailPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Scan Result')),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
+        padding: const EdgeInsets.fromLTRB(18, 16, 18, 28),
         children: [
           _TopImage(image: image, hasImage: hasImage),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           Row(
             children: [
               Expanded(
@@ -39,20 +39,22 @@ class ScanDetailPage extends StatelessWidget {
               _ConfidenceBadge(label: result.confidenceLabel),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           Text(
             result.caloriesLabel,
             style: Theme.of(context).textTheme.displaySmall?.copyWith(
               fontWeight: FontWeight.w800,
-              color: AppColors.accent,
+              color: AppColors.primary,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             'Scanned on ${_formatTimestamp(result.timestamp)}',
-            style: Theme.of(context).textTheme.bodyMedium,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           Row(
             children: [
               Expanded(
@@ -64,7 +66,7 @@ class ScanDetailPage extends StatelessWidget {
                   color: AppColors.secondary,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: NutritionCard(
                   title: 'Carbs',
@@ -74,7 +76,7 @@ class ScanDetailPage extends StatelessWidget {
                   color: AppColors.primary,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: NutritionCard(
                   title: 'Fat',
@@ -85,7 +87,7 @@ class ScanDetailPage extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           if (result.ingredients.isNotEmpty)
             AppCard(
               child: Column(
@@ -114,7 +116,7 @@ class ScanDetailPage extends StatelessWidget {
               ),
             ),
           if (result.ingredientDetails.isNotEmpty) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: 18),
             AppCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -125,7 +127,7 @@ class ScanDetailPage extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   ...result.ingredientDetails.map(
                     (detail) => Padding(
                       padding: const EdgeInsets.only(bottom: 10),
@@ -142,7 +144,7 @@ class ScanDetailPage extends StatelessWidget {
             ),
           ],
           if (result.alternatives.isNotEmpty) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: 18),
             AppCard(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,7 +182,7 @@ class ScanDetailPage extends StatelessWidget {
               ),
             ),
           ],
-          const SizedBox(height: 16),
+          const SizedBox(height: 18),
           FilledButton.icon(
             onPressed: () {
               final entry = DietEntry.fromPrediction(result);
@@ -210,22 +212,42 @@ class _TopImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(24),
       child: SizedBox(
-        height: 260,
+        height: 280,
         width: double.infinity,
-        child: hasImage
-            ? Image.file(image!, fit: BoxFit.cover)
-            : DecoratedBox(
-                decoration: const BoxDecoration(
-                  gradient: AppColors.headerGradient,
-                ),
-                child: const Icon(
-                  Icons.restaurant_outlined,
-                  color: Colors.white,
-                  size: 54,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            hasImage
+                ? Image.file(image!, fit: BoxFit.cover)
+                : DecoratedBox(
+                    decoration: const BoxDecoration(
+                      gradient: AppColors.headerGradient,
+                    ),
+                    child: const Icon(
+                      Icons.restaurant_outlined,
+                      color: Colors.white,
+                      size: 60,
+                    ),
+                  ),
+            if (hasImage)
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.12),
+                      ],
+                    ),
+                  ),
                 ),
               ),
+          ],
+        ),
       ),
     );
   }
@@ -239,14 +261,18 @@ class _ConfidenceBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.green.withValues(alpha: 0.12),
+        color: AppColors.primary.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.3),
+          width: 0.8,
+        ),
       ),
       child: Text(
         label,
-        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(
           color: AppColors.secondary,
           fontWeight: FontWeight.w700,
         ),
