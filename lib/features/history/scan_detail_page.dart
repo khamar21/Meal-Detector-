@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/ui/app_colors.dart';
 import '../../core/ui/app_widgets.dart';
+import '../../core/ui/palette.dart';
 import '../diet/model/diet_models.dart';
 import '../diet/viewmodel/diet_view_model.dart';
 import '../home/providers.dart';
@@ -23,7 +24,7 @@ class ScanDetailPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Scan Result'),
-        backgroundColor: Colors.transparent,
+        backgroundColor: Palette.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
       ),
@@ -33,7 +34,7 @@ class ScanDetailPage extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFF6FFF8), Color(0xFFF8FBF9), Color(0xFFFFFFFF)],
+            colors: [Palette.background, Palette.surfaceTint, Palette.surface],
           ),
         ),
         child: SafeArea(
@@ -53,7 +54,7 @@ class ScanDetailPage extends StatelessWidget {
                 primaryValue: result.caloriesLabel,
                 primaryLabel: 'Calories',
                 confidenceLabel: result.confidenceLabel,
-                accentColor: colorScheme.primary,
+                accentColor: Palette.primary,
               ),
               const SizedBox(height: 18),
               Row(
@@ -64,7 +65,7 @@ class ScanDetailPage extends StatelessWidget {
                       value:
                           '${(result.nutrition.protein ?? 0).toStringAsFixed(0)} g',
                       icon: Icons.fitness_center,
-                      color: AppColors.secondary,
+                      color: Palette.secondary,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -74,7 +75,7 @@ class ScanDetailPage extends StatelessWidget {
                       value:
                           '${(result.nutrition.carbs ?? 0).toStringAsFixed(0)} g',
                       icon: Icons.grain,
-                      color: AppColors.primary,
+                      color: Palette.primary,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -84,7 +85,7 @@ class ScanDetailPage extends StatelessWidget {
                       value:
                           '${(result.nutrition.fat ?? 0).toStringAsFixed(0)} g',
                       icon: Icons.water_drop_outlined,
-                      color: AppColors.accent,
+                      color: Palette.accent,
                     ),
                   ),
                 ],
@@ -293,11 +294,11 @@ class _HeroSummary extends StatelessWidget {
                     ? Image.file(image!, fit: BoxFit.cover)
                     : DecoratedBox(
                         decoration: const BoxDecoration(
-                          gradient: AppColors.headerGradient,
+                          gradient: Palette.heroGradient,
                         ),
                         child: const Icon(
                           Icons.restaurant_outlined,
-                          color: Colors.white,
+                          color: Palette.surface,
                           size: 64,
                         ),
                       ),
@@ -309,9 +310,9 @@ class _HeroSummary extends StatelessWidget {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        Colors.black.withValues(alpha: 0.08),
+                        Palette.text.withValues(alpha: 0.08),
                         Colors.transparent,
-                        Colors.black.withValues(alpha: 0.72),
+                        Palette.text.withValues(alpha: 0.72),
                       ],
                       stops: const [0.0, 0.45, 1.0],
                     ),
@@ -335,7 +336,7 @@ class _HeroSummary extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: textTheme.headlineSmall?.copyWith(
-                        color: Colors.white,
+                        color: Palette.surface,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -348,16 +349,16 @@ class _HeroSummary extends StatelessWidget {
                             vertical: 10,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.18),
+                            color: Palette.surface.withValues(alpha: 0.18),
                             borderRadius: BorderRadius.circular(999),
                             border: Border.all(
-                              color: Colors.white.withValues(alpha: 0.24),
+                              color: Palette.surface.withValues(alpha: 0.24),
                             ),
                           ),
                           child: Text(
                             caloriesLabel,
                             style: textTheme.titleMedium?.copyWith(
-                              color: Colors.white,
+                              color: Palette.surface,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
@@ -369,7 +370,7 @@ class _HeroSummary extends StatelessWidget {
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: textTheme.bodyMedium?.copyWith(
-                              color: Colors.white.withValues(alpha: 0.92),
+                              color: Palette.surface.withValues(alpha: 0.92),
                               fontWeight: FontWeight.w500,
                             ),
                           ),

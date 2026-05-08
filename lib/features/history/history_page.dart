@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/ui/palette.dart';
 import '../home/providers.dart';
 import 'scan_detail_page.dart';
 
@@ -59,13 +60,7 @@ class HistoryPage extends ConsumerWidget {
                         ).colorScheme.outline.withValues(alpha: 0.1),
                         width: 0.8,
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.04),
-                          blurRadius: 12,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
+                      boxShadow: Palette.softShadow,
                     ),
                     child: Row(
                       children: [
@@ -77,9 +72,7 @@ class HistoryPage extends ConsumerWidget {
                             child: hasImage
                                 ? Image.file(image, fit: BoxFit.cover)
                                 : Container(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.surfaceContainer,
+                                    color: Palette.surface,
                                     child: Icon(
                                       item.sourceType == PredictionSource.voice
                                           ? Icons.mic
@@ -106,9 +99,7 @@ class HistoryPage extends ConsumerWidget {
                                 item.caloriesLabel,
                                 style: Theme.of(context).textTheme.bodyMedium
                                     ?.copyWith(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.primary,
+                                      color: Palette.primary,
                                       fontWeight: FontWeight.w600,
                                     ),
                               ),
@@ -211,9 +202,9 @@ class _EmptyHistory extends StatelessWidget {
             Text(
               'Your image and voice predictions will appear here.',
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Palette.textMuted),
             ),
             const SizedBox(height: 20),
             OutlinedButton.icon(

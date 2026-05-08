@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/ui/app_colors.dart';
 import '../../../../core/ui/app_widgets.dart';
+import '../../../../core/ui/palette.dart';
 import '../../model/diet_models.dart';
 import '../../viewmodel/diet_view_model.dart';
 
@@ -93,7 +94,7 @@ class DietDashboardScreen extends ConsumerWidget {
                               '${(goal - totalCals).toStringAsFixed(0)} kcal',
                               style: textTheme.titleMedium?.copyWith(
                                 color: totalCals > goal
-                                    ? const Color(0xFFC0392B)
+                                    ? Palette.error
                                     : AppColors.secondary,
                               ),
                             ),
@@ -112,13 +113,13 @@ class DietDashboardScreen extends ConsumerWidget {
                           Icon(
                             Icons.restaurant_outlined,
                             size: 64,
-                            color: Colors.grey[300],
+                            color: Palette.outline,
                           ),
                           const SizedBox(height: 12),
                           Text(
                             'No meals logged yet',
                             style: textTheme.bodyLarge?.copyWith(
-                              color: Colors.grey[500],
+                              color: Palette.textMuted,
                             ),
                           ),
                         ],
@@ -207,7 +208,7 @@ class _MealSection extends StatelessWidget {
                       Text(
                         '${items.length} item${items.length != 1 ? 's' : ''}',
                         style: textTheme.bodySmall?.copyWith(
-                          color: Colors.grey[600],
+                          color: Palette.textMuted,
                         ),
                       ),
                     ],
@@ -252,7 +253,7 @@ class _FoodItem extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.background,
+        color: Palette.surfaceTint,
         borderRadius: BorderRadius.circular(12),
       ),
       padding: const EdgeInsets.all(10),
@@ -266,10 +267,10 @@ class _FoodItem extends StatelessWidget {
               child: hasImage
                   ? Image.file(image, fit: BoxFit.cover)
                   : Container(
-                      color: Colors.grey[200],
+                      color: Palette.outlineSoft,
                       child: Icon(
                         Icons.restaurant,
-                        color: Colors.grey[400],
+                        color: Palette.textMuted,
                         size: 24,
                       ),
                     ),
@@ -291,7 +292,9 @@ class _FoodItem extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   entry.loggedAt.toString().split('.')[0],
-                  style: textTheme.bodySmall?.copyWith(color: Colors.grey[500]),
+                  style: textTheme.bodySmall?.copyWith(
+                    color: Palette.textMuted,
+                  ),
                 ),
               ],
             ),

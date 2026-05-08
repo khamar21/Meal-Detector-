@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/ui/app_colors.dart';
 import '../../../../core/ui/app_widgets.dart';
+import '../../../../core/ui/palette.dart';
 import '../../../diet/viewmodel/diet_view_model.dart';
 import '../../../home/providers.dart';
 
@@ -30,7 +31,7 @@ class HomeDashboardScreen extends ConsumerWidget {
     final fat = _macroTotal(scanHistory.map((it) => it.nutrition.fat));
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Palette.background,
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
@@ -42,8 +43,8 @@ class HomeDashboardScreen extends ConsumerWidget {
                 onPressed: onScanTap,
                 icon: const Icon(Icons.camera_alt_outlined),
                 style: IconButton.styleFrom(
-                  backgroundColor: Colors.white.withValues(alpha: 0.2),
-                  foregroundColor: Colors.white,
+                  backgroundColor: Palette.surface.withValues(alpha: 0.2),
+                  foregroundColor: Palette.surface,
                 ),
               ),
             ),
@@ -138,8 +139,8 @@ class HomeDashboardScreen extends ConsumerWidget {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: onScanTap,
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        backgroundColor: Palette.primary,
+        foregroundColor: Palette.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         icon: const Icon(Icons.document_scanner_outlined),
         label: const Text('Scan Food'),
