@@ -1335,10 +1335,9 @@ class _BatchResultCard extends StatelessWidget {
                           ],
                         ),
                         const SizedBox(height: 8),
-                        Text(kTypeVideo
-                          item.error ??
-                              'The backend could not process this image.',
-                        ),
+                        Text(
+                         item.error ?? 'The backend could not process this image.',
+                          ),
                       ],
                     ),
             ),
