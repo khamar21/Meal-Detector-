@@ -1,7 +1,11 @@
 import 'package:food_calorie_frontend/core/architecture/index.dart';
-import 'package:uuid/uuid.dart';
 
 import '../../domain/entities/user_profile_entity.dart';
+
+/// Generate a simple unique ID
+String _generateId() {
+  return '${DateTime.now().millisecondsSinceEpoch}_${(DateTime.now().microsecond % 10000).toString().padLeft(4, '0')}';
+}
 
 /// Data model for UserProfile
 class UserProfileModel extends Model<UserProfile> {
@@ -109,7 +113,7 @@ class UserProfileModel extends Model<UserProfile> {
   }) {
     final now = DateTime.now();
     return UserProfileModel(
-      id: const Uuid().v4(),
+      id: _generateId(),
       name: name,
       age: age,
       gender: gender,

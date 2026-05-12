@@ -55,10 +55,7 @@ class ProfileLocalDataSource extends LocalDataSource {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_profileKey);
     } catch (e) {
-      throw CacheFailure(
-        message: 'Failed to delete profile',
-        originalError: e,
-      );
+      throw CacheFailure(message: 'Failed to delete profile', originalError: e);
     }
   }
 

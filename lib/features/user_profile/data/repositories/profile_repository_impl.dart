@@ -15,9 +15,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
   Future<Either<Failure, UserProfile?>> getProfile() async {
     try {
       final model = await _localDataSource.loadProfile();
-      return EitherFactories.right<Failure, UserProfile?>(
-        model?.toEntity(),
-      );
+      return EitherFactories.right<Failure, UserProfile?>(model?.toEntity());
     } on Failure catch (failure) {
       return EitherFactories.left<Failure, UserProfile?>(failure);
     } catch (e, stackTrace) {
@@ -32,9 +30,7 @@ class ProfileRepositoryImpl implements ProfileRepository {
   }
 
   @override
-  Future<Either<Failure, UserProfile>> saveProfile(
-    UserProfile profile,
-  ) async {
+  Future<Either<Failure, UserProfile>> saveProfile(UserProfile profile) async {
     try {
       final model = UserProfileModel.fromEntity(profile);
       await _localDataSource.saveProfile(model);

@@ -1,6 +1,5 @@
 import 'package:food_calorie_frontend/core/architecture/index.dart';
 
-import '../entities/user_profile_entity.dart';
 import '../repositories/profile_repository.dart';
 
 /// UseCase to delete user profile
