@@ -3,11 +3,23 @@ import 'package:flutter/material.dart';
 class Palette {
   const Palette._();
 
+  // Primary Green Shades
   static const Color primary = Color(0xFF2ECC71);
   static const Color primaryStrong = Color(0xFF1FA853);
   static const Color primarySoft = Color(0xFF7BE7A8);
+  static const Color primaryExtraLight = Color(0xFFE8F8F0);
+
+  // Secondary Green Shades
   static const Color secondary = Color(0xFF27AE60);
   static const Color secondarySoft = Color(0xFF5AC89F);
+  static const Color secondaryLight = Color(0xFF52D4A5);
+  static const Color secondaryExtraLight = Color(0xFFD5F4E6);
+
+  // Tertiary Green Shade
+  static const Color tertiaryGreen = Color(0xFF16A34A);
+  static const Color tertiaryGreenLight = Color(0xFFC6F6D5);
+
+  // Accent & Complementary
   static const Color accent = Color(0xFFFFC857);
   static const Color accentSoft = Color(0xFFFFD97D);
 
@@ -36,6 +48,31 @@ class Palette {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [primarySoft, primary, secondary],
+  );
+
+  // New Green Gradients
+  static const LinearGradient premiumGreenGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [secondaryLight, primary, primaryStrong],
+  );
+
+  static const LinearGradient softGreenGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [primaryExtraLight, primarySoft, secondaryLight],
+  );
+
+  static const LinearGradient vibrantGreenGradient = LinearGradient(
+    begin: Alignment.topRight,
+    end: Alignment.bottomLeft,
+    colors: [tertiaryGreen, primary, secondaryLight],
+  );
+
+  static const LinearGradient warmGreenGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [primary, accent, secondaryLight],
   );
 
   static const List<BoxShadow> softShadow = [

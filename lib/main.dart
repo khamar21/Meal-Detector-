@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'core/api_service.dart';
 import 'app/app_shell.dart';
 import 'core/ui/app_colors.dart';
+import 'core/ui/palette.dart';
 
 void main() {
   debugPrint('API_BASE_URL resolved to: ${ApiService.baseUrl}');
@@ -27,7 +28,7 @@ class MyApp extends StatelessWidget {
       surfaceContainerHighest: Color(0xFFE9F9EF),
       onSurfaceVariant: Color(0xFF4B5B52),
       outline: Color(0xFFD3E7DA),
-      outlineVariant: Color(0xFFE2F1E8),
+      outlineVariant: Palette.primaryExtraLight,
       tertiary: AppColors.accent,
       onTertiary: Color(0xFF3A2B02),
     );
@@ -86,12 +87,14 @@ class MyApp extends StatelessWidget {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(15),
           ),
+          elevation: 2,
+          shadowColor: AppColors.primary.withValues(alpha: 0.4),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.secondary,
-          side: const BorderSide(color: AppColors.secondary),
+          side: const BorderSide(color: AppColors.secondary, width: 1.5),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(15),

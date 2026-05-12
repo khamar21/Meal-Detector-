@@ -11,24 +11,31 @@ class AppCard extends StatelessWidget {
     this.padding = const EdgeInsets.all(20),
     this.margin,
     this.radius = 20,
+    this.gradient,
+    this.accentBorder = false,
   });
 
   final Widget child;
   final EdgeInsetsGeometry padding;
   final EdgeInsetsGeometry? margin;
   final double radius;
+  final LinearGradient? gradient;
+  final bool accentBorder;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       margin: margin,
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: gradient == null ? AppColors.card : null,
+        gradient: gradient,
         borderRadius: BorderRadius.circular(radius),
         boxShadow: AppColors.elevatedShadow,
         border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.08),
-          width: 0.8,
+          color: accentBorder
+              ? AppColors.secondaryLight.withValues(alpha: 0.3)
+              : Theme.of(context).colorScheme.outline.withValues(alpha: 0.08),
+          width: accentBorder ? 1.5 : 0.8,
         ),
       ),
       child: Padding(padding: padding, child: child),
@@ -54,7 +61,7 @@ class GradientHeader extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        gradient: AppColors.headerGradient,
+        gradient: AppColors.vibrantGreenGradient,
         borderRadius: BorderRadius.circular(28),
         boxShadow: AppColors.elevatedShadow,
       ),
@@ -97,27 +104,56 @@ class NutritionCard extends StatelessWidget {
     required this.icon,
     super.key,
     this.color,
+    this.useGradient = true,
   });
 
   final String title;
   final String value;
   final IconData icon;
   final Color? color;
+  final bool useGradient;
 
   @override
   Widget build(BuildContext context) {
     final tone = color ?? Theme.of(context).colorScheme.primary;
 
+    // Create gradient backgrounds based on the tone color
+    LinearGradient? cardGradient;
+    if (useGradient) {
+      if (tone == AppColors.secondary) {
+        cardGradient = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.secondaryExtraLight, AppColors.card],
+        );
+      } else if (tone == AppColors.primary) {
+        cardGradient = LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.primaryExtraLight, AppColors.card],
+        );
+      }
+    }
+
     return AppCard(
       radius: 18,
       padding: const EdgeInsets.all(16),
+      gradient: cardGradient,
+      accentBorder: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: tone.withValues(alpha: 0.12),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  tone.withValues(alpha: 0.15),
+                  tone.withValues(alpha: 0.08),
+                ],
+              ),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: tone, size: 20),
@@ -173,11 +209,17 @@ class AnimatedCalorieRing extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
+              // Background circle with gradient
+              CustomPaint(
+                painter: GradientCirclePainter(
+                  gradient: AppColors.softGreenGradient,
+                ),
+              ),
               CircularProgressIndicator(
                 value: 1,
                 strokeWidth: 14,
                 valueColor: AlwaysStoppedAnimation(
-                  Colors.green.withValues(alpha: 0.15),
+                  AppColors.secondaryExtraLight,
                 ),
               ),
               CircularProgressIndicator(
@@ -213,6 +255,31 @@ class AnimatedCalorieRing extends StatelessWidget {
   }
 }
 
+class GradientCirclePainter extends CustomPainter {
+  final LinearGradient gradient;
+
+  GradientCirclePainter({required this.gradient});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
+
+    final rect = Rect.fromCircle(center: center, radius: radius);
+    final paint = Paint()
+      ..shader = gradient.createShader(rect)
+      ..strokeWidth = 1
+      ..style = PaintingStyle.fill;
+
+    canvas.drawCircle(center, radius * 0.08, paint);
+  }
+
+  @override
+  bool shouldRepaint(GradientCirclePainter oldDelegate) {
+    return oldDelegate.gradient != gradient;
+  }
+}
+
 class FoodItemCard extends StatelessWidget {
   const FoodItemCard({
     required this.title,
@@ -237,6 +304,7 @@ class FoodItemCard extends StatelessWidget {
     return AppCard(
       radius: 16,
       margin: const EdgeInsets.only(bottom: 10),
+      accentBorder: true,
       child: Row(
         children: [
           ClipRRect(
@@ -248,7 +316,14 @@ class FoodItemCard extends StatelessWidget {
                   ? Image.file(image, fit: BoxFit.cover)
                   : DecoratedBox(
                       decoration: BoxDecoration(
-                        color: Colors.green.withValues(alpha: 0.1),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            AppColors.secondaryExtraLight,
+                            AppColors.primaryExtraLight,
+                          ],
+                        ),
                       ),
                       child: Icon(icon, color: AppColors.secondary),
                     ),
@@ -265,17 +340,23 @@ class FoodItemCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
+                    color: AppColors.text,
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+                Text(
+                  subtitle,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(color: AppColors.textMuted),
+                ),
               ],
             ),
           ),
           Text(
             trailing,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: AppColors.secondary,
+              color: AppColors.primary,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -302,12 +383,29 @@ class ProgressSummaryCard extends StatelessWidget {
     final clamped = progress.clamp(0.0, 1.0);
 
     return AppCard(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [AppColors.primaryExtraLight, AppColors.card],
+      ),
+      accentBorder: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: Theme.of(context).textTheme.titleLarge),
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: AppColors.text,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
           const SizedBox(height: 4),
-          Text(subtitle, style: Theme.of(context).textTheme.bodyMedium),
+          Text(
+            subtitle,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+          ),
           const SizedBox(height: 14),
           TweenAnimationBuilder<double>(
             tween: Tween<double>(begin: 0, end: clamped),
@@ -316,11 +414,25 @@ class ProgressSummaryCard extends StatelessWidget {
             builder: (context, value, _) {
               return ClipRRect(
                 borderRadius: BorderRadius.circular(999),
-                child: LinearProgressIndicator(
-                  minHeight: 10,
-                  value: value,
-                  backgroundColor: Colors.green.withValues(alpha: 0.14),
-                  valueColor: const AlwaysStoppedAnimation(AppColors.primary),
+                child: Stack(
+                  children: [
+                    LinearProgressIndicator(
+                      minHeight: 10,
+                      value: 1,
+                      backgroundColor: AppColors.secondaryExtraLight,
+                      valueColor: const AlwaysStoppedAnimation(
+                        Colors.transparent,
+                      ),
+                    ),
+                    LinearProgressIndicator(
+                      minHeight: 10,
+                      value: value,
+                      backgroundColor: Colors.transparent,
+                      valueColor: const AlwaysStoppedAnimation(
+                        AppColors.primary,
+                      ),
+                    ),
+                  ],
                 ),
               );
             },
