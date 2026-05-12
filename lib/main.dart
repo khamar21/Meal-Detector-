@@ -109,22 +109,29 @@ class MyApp extends StatelessWidget {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.white,
+        fillColor: Palette.primaryExtraLight.withValues(alpha: 0.6),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 14,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFFD8EBDD)),
+          borderSide: const BorderSide(color: Palette.secondaryLight),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFFD8EBDD)),
+          borderSide: const BorderSide(
+            color: Palette.secondaryLight,
+            width: 1.2,
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: AppColors.primary, width: 1.4),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
+        ),
+        floatingLabelStyle: TextStyle(
+          color: AppColors.primary,
+          fontWeight: FontWeight.w600,
         ),
       ),
       visualDensity: VisualDensity.adaptivePlatformDensity,

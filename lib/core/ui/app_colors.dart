@@ -10,6 +10,7 @@ class AppColors {
   static const Color background = Palette.background;
   static const Color accent = Palette.accent;
   static const Color text = Palette.text;
+  static const Color textMuted = Palette.textMuted;
   static const Color card = Palette.card;
   static const Color primaryLight = Palette.primarySoft;
   static const Color primaryDark = Palette.primaryStrong;
