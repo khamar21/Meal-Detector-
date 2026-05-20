@@ -3,35 +3,35 @@ import 'package:flutter/material.dart';
 class Palette {
   const Palette._();
 
-  // Primary Green Shades
-  static const Color primary = Color(0xFF2ECC71);
-  static const Color primaryStrong = Color(0xFF1FA853);
-  static const Color primarySoft = Color(0xFF7BE7A8);
-  static const Color primaryExtraLight = Color(0xFFE8F8F0);
+  // Primary Red Shades
+  static const Color primary = Color(0xFFE74C3C);
+  static const Color primaryStrong = Color(0xFFC0392B);
+  static const Color primarySoft = Color(0xFFF5B7B1);
+  static const Color primaryExtraLight = Color(0xFFFADBD8);
 
-  // Secondary Green Shades
-  static const Color secondary = Color(0xFF27AE60);
-  static const Color secondarySoft = Color(0xFF5AC89F);
-  static const Color secondaryLight = Color(0xFF52D4A5);
-  static const Color secondaryExtraLight = Color(0xFFD5F4E6);
+  // Secondary Red Shades
+  static const Color secondary = Color(0xFFD32F2F);
+  static const Color secondarySoft = Color(0xFFEF9A9A);
+  static const Color secondaryLight = Color(0xFFFCE4EC);
+  static const Color secondaryExtraLight = Color(0xFFFCE4EC);
 
-  // Tertiary Green Shade
-  static const Color tertiaryGreen = Color(0xFF16A34A);
-  static const Color tertiaryGreenLight = Color(0xFFC6F6D5);
+  // Tertiary Red Shade
+  static const Color tertiaryGreen = Color(0xFFC62828);
+  static const Color tertiaryGreenLight = Color(0xFFFFCDD2);
 
   // Accent & Complementary
-  static const Color accent = Color(0xFFFFC857);
-  static const Color accentSoft = Color(0xFFFFD97D);
+  static const Color accent = Color(0xFFFFFFFF);
+  static const Color accentSoft = Color(0xFFFAFAFA);
 
-  static const Color background = Color(0xFFF7FFF9);
+  static const Color background = Color(0xFFFAFAFA);
   static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceTint = Color(0xFFE9F9EF);
+  static const Color surfaceTint = Color(0xFFFADBD8);
   static const Color card = surface;
 
   static const Color text = Color(0xFF1E1E1E);
-  static const Color textMuted = Color(0xFF53635A);
-  static const Color outline = Color(0xFFD3E7DA);
-  static const Color outlineSoft = Color(0xFFE2F1E8);
+  static const Color textMuted = Color(0xFF5D5D5D);
+  static const Color outline = Color(0xFFF5B7B1);
+  static const Color outlineSoft = Color(0xFFFADBD8);
 
   static const Color success = Color(0xFF27AE60);
   static const Color warning = Color(0xFFF39C12);
@@ -50,7 +50,7 @@ class Palette {
     colors: [primarySoft, primary, secondary],
   );
 
-  // New Green Gradients
+  // New Red Gradients
   static const LinearGradient premiumGreenGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,

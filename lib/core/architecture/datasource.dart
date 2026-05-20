@@ -7,3 +7,4 @@ abstract class LocalDataSource {
 abstract class RemoteDataSource {
   const RemoteDataSource();
 }
+

@@ -25,12 +25,12 @@ class MyApp extends StatelessWidget {
       onError: Colors.white,
       surface: AppColors.background,
       onSurface: AppColors.text,
-      surfaceContainerHighest: Color(0xFFE9F9EF),
-      onSurfaceVariant: Color(0xFF4B5B52),
-      outline: Color(0xFFD3E7DA),
+      surfaceContainerHighest: Color(0xFFFADBD8),
+      onSurfaceVariant: Color(0xFF5D5D5D),
+      outline: Color(0xFFF5B7B1),
       outlineVariant: Palette.primaryExtraLight,
       tertiary: AppColors.accent,
-      onTertiary: Color(0xFF3A2B02),
+      onTertiary: Color(0xFF1E1E1E),
     );
 
     final textTheme = GoogleFonts.poppinsTextTheme().copyWith(
