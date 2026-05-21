@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -40,33 +41,62 @@ class _AppShellState extends ConsumerState<AppShell> {
           children: _pages,
         ),
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        height: 74,
-        animationDuration: const Duration(milliseconds: 300),
-        onDestinationSelected: (value) => setState(() => _index = value),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home_rounded),
-            label: 'Home',
+      bottomNavigationBar: ClipRRect(
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          child: Container(
+            height: 90,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.white.withOpacity(0.06),
+                  Colors.white.withOpacity(0.10),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              border: Border.all(color: Colors.white.withOpacity(0.12)),
+              color: Colors.white.withOpacity(0.04),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8.0,
+                vertical: 8.0,
+              ),
+              child: NavigationBar(
+                backgroundColor: Colors.transparent,
+                selectedIndex: _index,
+                height: 56,
+                animationDuration: const Duration(milliseconds: 300),
+                onDestinationSelected: (value) =>
+                    setState(() => _index = value),
+                destinations: const [
+                  NavigationDestination(
+                    icon: Icon(Icons.home_outlined),
+                    selectedIcon: Icon(Icons.home_rounded),
+                    label: 'Home',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(Icons.camera_alt_outlined),
+                    selectedIcon: Icon(Icons.camera_alt_rounded),
+                    label: 'Scan',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(Icons.restaurant_menu_outlined),
+                    selectedIcon: Icon(Icons.restaurant_menu_rounded),
+                    label: 'Diet',
+                  ),
+                  NavigationDestination(
+                    icon: Icon(Icons.person_outline),
+                    selectedIcon: Icon(Icons.person),
+                    label: 'Profile',
+                  ),
+                ],
+              ),
+            ),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.camera_alt_outlined),
-            selectedIcon: Icon(Icons.camera_alt_rounded),
-            label: 'Scan',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.restaurant_menu_outlined),
-            selectedIcon: Icon(Icons.restaurant_menu_rounded),
-            label: 'Diet',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
-            label: 'Profile',
-          ),
-        ],
+        ),
       ),
     );
   }
