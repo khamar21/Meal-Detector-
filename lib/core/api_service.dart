@@ -7,10 +7,21 @@ import 'package:http/http.dart' as http;
 class ApiService {
   static const Duration _timeout = Duration(seconds: 30);
   static const String _fallbackWifiUrl = 'http://192.168.31.36:8000';
+  static const String _fallbackLocalUrl = 'http://127.0.0.1:8000';
+  static const bool _useAdbReverse = bool.fromEnvironment('USE_ADB_REVERSE');
 
   static String get baseUrl {
     const override = String.fromEnvironment('API_BASE_URL');
     if (override.isNotEmpty) return override;
+
+    if (_useAdbReverse ||
+        Platform.isIOS ||
+        Platform.isLinux ||
+        Platform.isMacOS ||
+        Platform.isWindows) {
+      return _fallbackLocalUrl;
+    }
+
     return _fallbackWifiUrl;
   }
 
